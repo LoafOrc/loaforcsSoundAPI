@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using static UnityEngine.VFX.VisualEffectControlTrackController;
 
 namespace loaforcsSoundAPI.Patches {
     [HarmonyPatch(typeof(AudioSource))]

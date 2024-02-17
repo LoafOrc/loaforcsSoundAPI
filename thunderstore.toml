@@ -1,0 +1,30 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "loaforc"
+name = "loaforcsSoundAPI"
+versionNumber = "0.0.1"
+description = "A soundtool made to give Soundpack creators ultimate control."
+websiteUrl = "https://thunderstore.io"
+containsNsfwContent = false
+[package.dependencies]
+BepInEx-BepInExPack = "5.4.2100"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./loaforcsSoundAPI/bin/Release/netstandard2.1/me.loaforc.soundapi.dll"
+target = "./plugins/me.loaforc.soundapi.dll"
+
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "riskofrain2", ]
+[publish.categories]
+riskofrain2 = [ "items", "skills", ]
+
+
