@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using loaforcsSoundAPI.API;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,7 +29,7 @@ namespace loaforcsSoundAPI {
             }
 
             // get clip
-            clip = AudioClipFromPath(path);
+            clip = API.SoundReplacementAPI.FileFormats[Path.GetExtension(path).ToLower()].LoadAudioClip(path);
 
             // final checks
             if(clip == null) {
@@ -59,33 +60,6 @@ namespace loaforcsSoundAPI {
             }
 
             return true;
-        }
-
-        private static AudioClip AudioClipFromPath(string path) { // code stolen from 
-            AudioClip clip = null;
-            using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, TYPE_MAPPINGS[Path.GetExtension(path)])) {
-                uwr.SendWebRequest();
-
-                // we have to wrap tasks in try/catch, otherwise it will just fail silently
-                try {
-                    while (!uwr.isDone) {
-
-                    }
-
-                    if (uwr.result != UnityWebRequest.Result.Success) {
-                        SoundPlugin.logger.LogError($"============");
-                        SoundPlugin.logger.LogError($"UnityWebRequest failed while trying to get {path}. Full error below");
-                        SoundPlugin.logger.LogError(uwr.error);
-                        SoundPlugin.logger.LogError($"============");
-                    } else {
-                        clip = DownloadHandlerAudioClip.GetContent(uwr);
-                    }
-                } catch (Exception err) {
-                    SoundPlugin.logger.LogError($"{err.Message}, {err.StackTrace}");
-                }
-            }
-
-            return clip;
         }
     }
 }
