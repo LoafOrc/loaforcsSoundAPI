@@ -27,10 +27,10 @@ namespace loaforcsSoundAPI.Data {
 
         string[] loadOnStartup;
 
-        private Dictionary<string, dynamic> Config = new Dictionary<string, dynamic>();
+        private Dictionary<string, object> Config = new Dictionary<string, object>();
 
         public T GetConfigOption<T>(string configID) {
-            return ((ConfigEntry<T>)Config[configID]).Value;
+            return ((ConfigEntry<T>) Config[configID]).Value;
         }
 
         public SoundPack(string folder) {
@@ -77,7 +77,13 @@ namespace loaforcsSoundAPI.Data {
 
                     switch(configSettings["default"].Type) {
                         case JTokenType.Boolean:
-                            Config.Add(configDef.Name, configFile.Bind(configDef.Name.Split(":")[0], configDef.Name.Split(":")[1], (bool)configSettings["default"]));
+                            Config.Add(
+                                configDef.Name, 
+                                configFile.Bind(configDef.Name.Split(":")[0], 
+                                configDef.Name.Split(":")[1], 
+                                (bool)configSettings["default"], 
+                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
+                            );
                             break;
                         default:
                             SoundPlugin.logger.LogError($"`{configSettings["default"].Type} configtype is currently unsupported!");

@@ -1,3 +1,8 @@
+## v0.1
+- Added basic condition system
+- Added support for soundpacks to have custom configs
+- Fixed an issue where the voice chat could have been broken (seems to work now).
+
 ## v0.0
 - Inital release
 

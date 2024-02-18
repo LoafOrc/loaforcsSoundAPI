@@ -60,7 +60,8 @@ namespace loaforcsSoundAPI.Patches {
             SoundMatchString matchedString = null;
             foreach(SoundMatchString matchString in SoundReplaceGroup.GlobalSoundReplacements[name.Split(":")[2]]) {
                 if(matchString.Matches(name)) {
-                    matchedString = matchString; break;
+                    if(matchString.Group.TestCondition())
+                        matchedString = matchString; break;
                 }
             }
 

@@ -17,14 +17,8 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void ProcessNewScene(Scene scene, LoadSceneMode __) {
             foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
-                /*
-                AudioClip replacement = AudioSourcePatch.GetReplacementClip(AudioSourcePatch.ProcessName(source, source.clip));
-                if (replacement != null) {
-                    replacement.name = source.clip.name;
-                    source.clip = replacement;
-                }
-                */
-                source.Stop();
+                if(source.playOnAwake)
+                    source.Stop();
 
                 if(source.TryGetComponent(out AudioSourceReplaceHelper ext)) {
                     SoundPlugin.logger.LogWarning("Multiple audio sources on one gameobject, this is unsupported right now!");

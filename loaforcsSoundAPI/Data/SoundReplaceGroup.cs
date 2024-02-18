@@ -64,7 +64,7 @@ namespace loaforcsSoundAPI.Data {
         public bool TestCondition() {
             if (GroupCondition == null) return true;
 
-            return GroupCondition.Evaluate(pack, )
+            return GroupCondition.Evaluate(pack, ConditionSettings);
         }
 
         private static void CreateSoundReplacement(SoundPack pack, List<SoundReplacement> replacements, JObject sound) {
