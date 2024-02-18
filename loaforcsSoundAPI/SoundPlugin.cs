@@ -11,7 +11,8 @@ using System.Linq;
 using loaforcsSoundAPI.Behaviours;
 using System.Threading;
 using loaforcsSoundAPI.API;
-using loaforcsSoundAPI.Formats;
+using loaforcsSoundAPI.Providers.Formats;
+using loaforcsSoundAPI.Providers.Random;
 
 namespace loaforcsSoundAPI {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -31,9 +32,12 @@ namespace loaforcsSoundAPI {
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID);
 
             logger.LogInfo("Registering default fileformats");
-            SoundReplacementAPI.RegisterAudioFormat(".mp3", new Mp3AudioFormat());
-            SoundReplacementAPI.RegisterAudioFormat(".ogg", new OggAudioFormat());
-            SoundReplacementAPI.RegisterAudioFormat(".wav", new WavAudioFormat());
+            SoundReplacementAPI.RegisterAudioFormatProvider(".mp3", new Mp3AudioFormat());
+            SoundReplacementAPI.RegisterAudioFormatProvider(".ogg", new OggAudioFormat());
+            SoundReplacementAPI.RegisterAudioFormatProvider(".wav", new WavAudioFormat());
+            logger.LogInfo("Registering default randomness providers");
+            SoundReplacementAPI.RegisterRandomProvider("pure", new PureRandomProvider());
+            SoundReplacementAPI.RegisterRandomProvider("determinstic", new DeterminsticRandomProvider());
 
             /*
             // Read all lines from the file

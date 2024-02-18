@@ -9,6 +9,8 @@ loaforcsSoundAPI makes use of Multithreading, splitting sound loading into two s
 
 ## Ultimate Control
 loaforcsSoundAPI affords a Sound-Pack creator much more control over how their sounds are played and how they organise. 
+
+A [simple tutorial](https://github.com/LoafOrc/loaforcsSoundAPI/wiki/Making-a-simple-Sound%E2%80%90Pack) to make a sound pack is available in the github wiki.
 ### Main Benefits
 - Custom File Structure Hierachy
 - Intuitive variations for sounds

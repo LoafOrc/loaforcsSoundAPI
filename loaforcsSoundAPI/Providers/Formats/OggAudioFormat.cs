@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace loaforcsSoundAPI.Formats {
-    internal class OggAudioFormat : AudioFileFormat {
-        public override AudioClip LoadAudioClip(string path) {
+namespace loaforcsSoundAPI.Providers.Formats
+{
+    internal class OggAudioFormat : AudioFormatProvider
+    {
+        public override AudioClip LoadAudioClip(string path)
+        {
             return LoadFromUWR(path, AudioType.OGGVORBIS);
         }
     }

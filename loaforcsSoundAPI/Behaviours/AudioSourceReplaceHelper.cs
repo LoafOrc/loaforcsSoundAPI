@@ -10,8 +10,10 @@ namespace loaforcsSoundAPI.Behaviours {
         [SerializeField]
         public bool playOnAwake;
 
-        void OnEnable() {
-            if(playOnAwake) {
+        void Start() {
+            SoundPlugin.logger.LogDebug(gameObject.name);
+
+            if(playOnAwake && source.enabled) {
                 source.Play();
             }
         }

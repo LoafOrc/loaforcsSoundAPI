@@ -12,22 +12,14 @@ namespace loaforcsSoundAPI.Patches {
     [HarmonyPatch(typeof(AudioSource))]
     internal static class AudioSourcePatch {
         [HarmonyPrefix, 
-            HarmonyPatch(nameof(AudioSource.PlayHelper), new Type[] { typeof(AudioSource), typeof(ulong) })
+            HarmonyPatch(nameof(AudioSource.Play), new Type[] { }),
+            HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) })
         ]
-        internal static void Play(AudioSource source) {
-            AudioClip replacement = GetReplacementClip(ProcessName(source, source.clip));
+        internal static void Play(AudioSource __instance) {
+            AudioClip replacement = GetReplacementClip(ProcessName(__instance, __instance.clip));
             if (replacement != null) {
-                replacement.name = source.clip.name;
-                source.clip = replacement;
-            }
-        }
-
-        [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.PlayOneShotHelper), new[] { typeof(AudioSource), typeof(AudioClip), typeof(float) })]
-        internal static void PlayOneShotHelper(AudioSource source, ref AudioClip clip) {
-            AudioClip replacement = GetReplacementClip(ProcessName(source, clip));
-            if (replacement != null) {
-                replacement.name = clip.name;
-                clip = replacement;
+                replacement.name = __instance.clip.name;
+                __instance.clip = replacement;
             }
         }
 
@@ -40,7 +32,7 @@ namespace loaforcsSoundAPI.Patches {
             }
         }
 
-        static string ProcessName(AudioSource source, AudioClip clip) {
+        internal static string ProcessName(AudioSource source, AudioClip clip) {
             if (clip == null) return null;
             string filteredgameObjectName = ":" + source.gameObject.name.Replace("(Clone)", "").Trim();
             if(source.transform.parent != null) {
@@ -59,7 +51,7 @@ namespace loaforcsSoundAPI.Patches {
             return $"{filteredgameObjectName}:{clip.name}";
         }
 
-        static AudioClip GetReplacementClip(string name) {
+        internal static AudioClip GetReplacementClip(string name) {
             if(name == null) return null;
             SoundPlugin.logger.LogDebug("Getting replacement for: " + name);
 
@@ -78,7 +70,7 @@ namespace loaforcsSoundAPI.Patches {
             int totalWeight = 0;
             replacements.ForEach(replacement => totalWeight += replacement.Weight);
 
-            int chosenWeight = UnityEngine.Random.Range(0, totalWeight);
+            int chosenWeight = matchedString.Group.Random.Range(matchedString.Group, 0, totalWeight);
             while (chosenWeight > 0) {
                 chosenWeight -= replacements[0].Weight;
                 replacements.RemoveAt(0);

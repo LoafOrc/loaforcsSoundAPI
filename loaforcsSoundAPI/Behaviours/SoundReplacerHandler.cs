@@ -1,8 +1,10 @@
-﻿using System;
+﻿using loaforcsSoundAPI.Patches;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static UnityEngine.VFX.VisualEffectControlTrackController;
 
 namespace loaforcsSoundAPI.Behaviours {
     internal class SoundReplacerHandler : MonoBehaviour {
@@ -15,7 +17,13 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void ProcessNewScene(Scene scene, LoadSceneMode __) {
             foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
-                if(!source.playOnAwake) continue;
+                /*
+                AudioClip replacement = AudioSourcePatch.GetReplacementClip(AudioSourcePatch.ProcessName(source, source.clip));
+                if (replacement != null) {
+                    replacement.name = source.clip.name;
+                    source.clip = replacement;
+                }
+                */
                 source.Stop();
 
                 if(source.TryGetComponent(out AudioSourceReplaceHelper ext)) {
@@ -23,7 +31,7 @@ namespace loaforcsSoundAPI.Behaviours {
                 } else {
                     ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
                     ext.source = source;
-                    ext.playOnAwake = true;
+                    ext.playOnAwake = source.playOnAwake;
                     source.playOnAwake = false;
                 }
             }

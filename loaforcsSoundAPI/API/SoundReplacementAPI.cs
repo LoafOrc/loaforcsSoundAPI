@@ -4,10 +4,15 @@ using System.Text;
 
 namespace loaforcsSoundAPI.API {
     public static class SoundReplacementAPI {
-        internal static Dictionary<string, AudioFileFormat> FileFormats = new Dictionary<string, AudioFileFormat>();
+        internal static Dictionary<string, AudioFormatProvider> FileFormats = new Dictionary<string, AudioFormatProvider>();
+        internal static Dictionary<string, RandomProvider> RandomProviders = new Dictionary<string, RandomProvider>();
 
-        public static void RegisterAudioFormat(string extension, AudioFileFormat format) {
-            FileFormats.Add(extension, format);
+        public static void RegisterAudioFormatProvider(string extension, AudioFormatProvider provider) {
+            FileFormats.Add(extension, provider);
+        }
+
+        public static void RegisterRandomProvider(string extension, RandomProvider provider) {
+            RandomProviders.Add(extension, provider);
         }
     }
 }

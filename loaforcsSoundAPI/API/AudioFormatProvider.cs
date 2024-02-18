@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 namespace loaforcsSoundAPI.API {
-    public abstract class AudioFileFormat {
+    public abstract class AudioFormatProvider {
 
         public abstract AudioClip LoadAudioClip(string path);
 

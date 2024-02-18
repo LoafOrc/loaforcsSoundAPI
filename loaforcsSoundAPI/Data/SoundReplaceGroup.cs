@@ -1,4 +1,5 @@
-﻿using loaforcsSoundAPI.Utils;
+﻿using loaforcsSoundAPI.API;
+using loaforcsSoundAPI.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -9,12 +10,14 @@ using System.Text;
 using UnityEngine;
 
 namespace loaforcsSoundAPI.Data {
-    internal class SoundReplaceGroup {
+    public class SoundReplaceGroup {
 
         internal static Dictionary<string, List<SoundMatchString>> GlobalSoundReplacements = new Dictionary<string, List<SoundMatchString>>();
         internal Dictionary<SoundMatchString, List<SoundReplacement>> SoundReplacements = new Dictionary<SoundMatchString, List<SoundReplacement>>();
 
-        SoundPack pack;
+        public SoundPack pack { get; private set; }
+        internal RandomProvider Random { get; private set; }
+        internal JObject RandomSettings { get; private set; }
 
         internal SoundReplaceGroup(SoundPack pack, JObject data) {
             this.pack = pack;
@@ -40,6 +43,13 @@ namespace loaforcsSoundAPI.Data {
                     else GlobalSoundReplacements[matchString.AudioName] = existing;
                     SoundReplacements[matchString] = replacements;
                 }
+            }
+
+            if(data.ContainsKey("randomness")) {
+                RandomSettings = data["randomness"] as JObject;
+                Random = SoundReplacementAPI.RandomProviders[(string)RandomSettings["type"]];
+            } else {
+                Random = SoundReplacementAPI.RandomProviders["pure"];
             }
         }
 

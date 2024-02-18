@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace loaforcsSoundAPI.Data {
-    internal class SoundPack {
+    public class SoundPack {
         private static List<SoundPack> LoadedSoundPacks = new List<SoundPack>();
 
         public string Name { get; private set; }
