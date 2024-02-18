@@ -1,4 +1,7 @@
-﻿using BepInEx;
+﻿using AsmResolver.PE.DotNet.Metadata;
+using BepInEx;
+using BepInEx.Bootstrap;
+using BepInEx.Configuration;
 using loaforcsSoundAPI.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,6 +26,12 @@ namespace loaforcsSoundAPI.Data {
         public IReadOnlyCollection<SoundReplaceGroup> ReplaceGroups { get { return replaceGroups.AsReadOnly(); } }
 
         string[] loadOnStartup;
+
+        private Dictionary<string, dynamic> Config = new Dictionary<string, dynamic>();
+
+        public T GetConfigOption<T>(string configID) {
+            return ((ConfigEntry<T>)Config[configID]).Value;
+        }
 
         public SoundPack(string folder) {
             SoundPlugin.logger.LogDebug($"Soundpack `{folder}` is being loaded.");
@@ -52,12 +61,35 @@ namespace loaforcsSoundAPI.Data {
                 HandleReplacers(loadOnStartup);
             }
 
+            if (jsonData.ContainsKey("config")) {
+                ConfigFile configFile = new ConfigFile(Utility.CombinePaths(Paths.ConfigPath, "soundpack." + Name + ".cfg"), saveOnInit: false, MetadataHelper.GetMetadata(SoundPlugin.Instance));
+
+                foreach (JProperty configDef in jsonData["config"]) {
+                    JObject configSettings = configDef.Value as JObject;
+
+                    if (!configSettings.ContainsKey("default")) {
+                        SoundPlugin.logger.LogError($"`{configDef.Name} doesn't have a default value!");
+                        continue;
+                    }
+                    if (!configSettings.ContainsKey("description")) {
+                        SoundPlugin.logger.LogWarning($"`{configDef.Name} doesn't have a description, consider adding one!");
+                    }
+
+                    switch(configSettings["default"].Type) {
+                        case JTokenType.Boolean:
+                            Config.Add(configDef.Name, configFile.Bind(configDef.Name.Split(":")[0], configDef.Name.Split(":")[1], (bool)configSettings["default"]));
+                            break;
+                        default:
+                            SoundPlugin.logger.LogError($"`{configSettings["default"].Type} configtype is currently unsupported!");
+                            break;
+                    }
+                }
+            }
+            
             LoadedSoundPacks.Add(this);
             loadTime.Stop();
             SoundPlugin.logger.LogInfo($"Loaded {Name}(start-up) in {loadTime.ElapsedMilliseconds}ms.");
         }
-
-
         internal void LoadNonStartupGroups() {
             if (!Directory.Exists(Path.Combine(PackPath, "replacers"))) return;
             Stopwatch loadTime = Stopwatch.StartNew();
@@ -66,8 +98,6 @@ namespace loaforcsSoundAPI.Data {
             loadTime.Stop();
             SoundPlugin.logger.LogInfo($"Loaded {Name}(non-startup) in {loadTime.ElapsedMilliseconds}ms.");
         }
-
-
         private void HandleReplacers(string[] replacers) {
             foreach(string replacer in replacers) {
                 string filePath = Path.Combine(PackPath, "replacers", replacer);

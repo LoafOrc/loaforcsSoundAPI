@@ -18,6 +18,9 @@ namespace loaforcsSoundAPI.Data {
         public SoundPack pack { get; private set; }
         internal RandomProvider Random { get; private set; }
         internal JObject RandomSettings { get; private set; }
+        internal JObject ConditionSettings { get; private set; }
+
+        ConditionProvider GroupCondition = null;
 
         internal SoundReplaceGroup(SoundPack pack, JObject data) {
             this.pack = pack;
@@ -51,6 +54,17 @@ namespace loaforcsSoundAPI.Data {
             } else {
                 Random = SoundReplacementAPI.RandomProviders["pure"];
             }
+
+            if(data.ContainsKey("condition")) {
+                ConditionSettings = data["condition"] as JObject;
+                GroupCondition = SoundReplacementAPI.ConditionProviders[(string)ConditionSettings["type"]];
+            }
+        }
+
+        public bool TestCondition() {
+            if (GroupCondition == null) return true;
+
+            return GroupCondition.Evaluate(pack, )
         }
 
         private static void CreateSoundReplacement(SoundPack pack, List<SoundReplacement> replacements, JObject sound) {

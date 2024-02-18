@@ -13,6 +13,7 @@ using System.Threading;
 using loaforcsSoundAPI.API;
 using loaforcsSoundAPI.Providers.Formats;
 using loaforcsSoundAPI.Providers.Random;
+using loaforcsSoundAPI.Providers.Conditions;
 
 namespace loaforcsSoundAPI {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -38,6 +39,8 @@ namespace loaforcsSoundAPI {
             logger.LogInfo("Registering default randomness providers");
             SoundReplacementAPI.RegisterRandomProvider("pure", new PureRandomProvider());
             SoundReplacementAPI.RegisterRandomProvider("determinstic", new DeterminsticRandomProvider());
+            logger.LogInfo("Registering default condition providers");
+            SoundReplacementAPI.RegisterConditionProvider("config", new ConfigCondition());
 
             /*
             // Read all lines from the file
