@@ -32,21 +32,21 @@ namespace loaforcsSoundAPI.Patches {
             }
         }
 
+        internal static string TrimGameObjectName(GameObject gameObject) {
+            string name = gameObject.name.Replace("(Clone)", "");
+            for (int i = 0; i < 10; i++) {
+                name = name.Replace("(" + i + ")", "");
+            }
+
+            return name.Trim();
+        }
+
         internal static string ProcessName(AudioSource source, AudioClip clip) {
             if (clip == null) return null;
-            string filteredgameObjectName = ":" + source.gameObject.name.Replace("(Clone)", "").Trim();
+            string filteredgameObjectName = ":" + TrimGameObjectName(source.gameObject);
             if(source.transform.parent != null) {
-                filteredgameObjectName = source.transform.parent.name.Replace("(Clone)", "").Trim() + filteredgameObjectName;
+                filteredgameObjectName = TrimGameObjectName(source.transform.parent.gameObject) + filteredgameObjectName;
             }
-            
-            /*
-            if(!SoundPlugin.UniqueSounds.Contains($"{filteredgameObjectName}:{clip.name}")) {
-                SoundPlugin.UniqueSounds.Add($"{filteredgameObjectName}:{clip.name}");
-                using (StreamWriter sw = new StreamWriter(Path.Combine(Paths.PluginPath, "unique_sounds.txt"), true)) {
-                    // Append the new line
-                    foreach(var sound in SoundPlugin.UniqueSounds) { sw.WriteLine(sound); }
-                }   
-            }*/
 
             return $"{filteredgameObjectName}:{clip.name}";
         }
@@ -60,8 +60,10 @@ namespace loaforcsSoundAPI.Patches {
             SoundMatchString matchedString = null;
             foreach(SoundMatchString matchString in SoundReplaceGroup.GlobalSoundReplacements[name.Split(":")[2]]) {
                 if(matchString.Matches(name)) {
-                    if(matchString.Group.TestCondition())
-                        matchedString = matchString; break;
+                    if (matchString.Group.TestCondition()) {
+                        matchedString = matchString; 
+                        break;
+                    }
                 }
             }
 

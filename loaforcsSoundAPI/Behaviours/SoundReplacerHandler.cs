@@ -17,17 +17,13 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void ProcessNewScene(Scene scene, LoadSceneMode __) {
             foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
-                if(source.playOnAwake)
-                    source.Stop();
+                if(source.gameObject.scene != scene) continue; // already processed
 
-                if(source.TryGetComponent(out AudioSourceReplaceHelper ext)) {
-                    SoundPlugin.logger.LogWarning("Multiple audio sources on one gameobject, this is unsupported right now!");
-                } else {
-                    ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
-                    ext.source = source;
-                    ext.playOnAwake = source.playOnAwake;
-                    source.playOnAwake = false;
-                }
+                if(source.playOnAwake)
+                   source.Stop();
+
+                AudioSourceReplaceHelper ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                ext.source = source;
             }
         }
     }

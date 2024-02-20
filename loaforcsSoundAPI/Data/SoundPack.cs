@@ -62,6 +62,7 @@ namespace loaforcsSoundAPI.Data {
             }
 
             if (jsonData.ContainsKey("config")) {
+                Stopwatch configTime = Stopwatch.StartNew();
                 ConfigFile configFile = new ConfigFile(Utility.CombinePaths(Paths.ConfigPath, "soundpack." + Name + ".cfg"), saveOnInit: false, MetadataHelper.GetMetadata(SoundPlugin.Instance));
 
                 foreach (JProperty configDef in jsonData["config"]) {
@@ -90,8 +91,10 @@ namespace loaforcsSoundAPI.Data {
                             break;
                     }
                 }
+                configTime.Stop();
+                SoundPlugin.logger.LogInfo($"Loaded {Name}(start-up:config) in {configTime.ElapsedMilliseconds}ms.");
             }
-            
+
             LoadedSoundPacks.Add(this);
             loadTime.Stop();
             SoundPlugin.logger.LogInfo($"Loaded {Name}(start-up) in {loadTime.ElapsedMilliseconds}ms.");
