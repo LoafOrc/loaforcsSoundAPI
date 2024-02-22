@@ -10,6 +10,10 @@
 ## v0.1.2
 - Fixed an issue where if two sound replacers replaced a sound *and* the one that loaded first was disabled due to a config, the second enabled one couldn't play
 
+## v0.1.3
+- Finally fixed the changelog not being placed correctly on the mod page
+- Put a quick warning message for advanced company users.
+
 ## v0.0
 - Inital release
 

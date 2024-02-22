@@ -4,7 +4,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "loaforc"
 name = "loaforcsSoundAPI"
-versionNumber = "0.1.2"
+versionNumber = "0.1.3"
 description = "A soundtool made to give Soundpack creators ultimate control."
 websiteUrl = "https://github.com/LoafOrc/loaforcsSoundAPI"
 containsNsfwContent = false
@@ -20,6 +20,9 @@ outdir = "./build"
 source = "./loaforcsSoundAPI/bin/Release/netstandard2.1/me.loaforc.soundapi.dll"
 target = "./plugins/me.loaforc.soundapi.dll"
 
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "./CHANGELOG.md"
 
 [publish]
 repository = "https://thunderstore.io"

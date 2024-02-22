@@ -5,7 +5,7 @@
         <AssemblyName>me.loaforc.soundapi</AssemblyName>
         <Product>loaforcsSoundAPI</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>1.0.0</Version>
+        <Version>0.1.3</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -57,6 +57,6 @@
 
 	<Target Name="CopyFiles" DependsOnTargets="PostBuildEvent" AfterTargets="PostBuildEvent">
 		<Message Importance="high" Text="Copying to local lethal company install" />
-		<Copy SourceFiles="$(TargetDir)me.loaforc.soundapi.dll" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Lethal Company\BepInEx\plugins" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Lethal Company\BepInEx\plugins" />
 	</Target>
 </Project>

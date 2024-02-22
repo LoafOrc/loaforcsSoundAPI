@@ -77,6 +77,17 @@ namespace loaforcsSoundAPI {
                 }
             }
 
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.potatoepet.AdvancedCompany")) {
+                logger.LogWarning("========================");
+                logger.LogWarning("JUST A HEADS UP!");
+                logger.LogWarning("----------------");
+                logger.LogWarning("You have AdvancedCompany installed,");
+                logger.LogWarning("AdvancedCompany currently causes incompatibilites with loaforcsSoundAPI");
+                logger.LogWarning("For more info go to this github issue:");
+                logger.LogWarning("https://github.com/FluffyFishGames/AdvancedCompany/issues/130");
+                logger.LogWarning("========================");
+            }
+
             logger.LogInfo("Starting second thread...");
             Thread nonStartup = new Thread(new ThreadStart(LoadNonStartupReplacements));
             nonStartup.Start();
