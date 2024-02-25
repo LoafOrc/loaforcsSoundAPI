@@ -86,8 +86,35 @@ namespace loaforcsSoundAPI.Data {
                                 configSettings.GetValueOrDefault("description", "[no description was provided]"))
                             );
                             break;
+                        case JTokenType.String:
+                            Config.Add(
+                                configDef.Name,
+                                configFile.Bind(configDef.Name.Split(":")[0],
+                                configDef.Name.Split(":")[1],
+                                (string)configSettings["default"],
+                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
+                            );
+                            break;
+                        case JTokenType.Float:
+                            Config.Add(
+                                configDef.Name,
+                                configFile.Bind(configDef.Name.Split(":")[0],
+                                configDef.Name.Split(":")[1],
+                                (float)configSettings["default"],
+                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
+                            );
+                            break;
+                        case JTokenType.Integer:
+                            Config.Add(
+                                configDef.Name,
+                                configFile.Bind(configDef.Name.Split(":")[0],
+                                configDef.Name.Split(":")[1],
+                                (int)configSettings["default"],
+                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
+                            );
+                            break;
                         default:
-                            SoundPlugin.logger.LogError($"`{configSettings["default"].Type} configtype is currently unsupported!");
+                            SoundPlugin.logger.LogError($"`{configSettings["default"].Type} configtype is currently unsupported! Supported values: bool, float, int, string");
                             break;
                     }
                 }

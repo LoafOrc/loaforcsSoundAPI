@@ -7,8 +7,8 @@ using System.Text;
 
 namespace loaforcsSoundAPI.Providers.Conditions {
     internal class ConfigCondition : ConditionProvider {
-        public override bool Evaluate(SoundPack pack, JObject conditionDef) {
-            return pack.GetConfigOption<bool>((string)conditionDef["config"]);
+        public override bool Evaluate(SoundReplaceGroup group, JObject conditionDef) {
+            return group.pack.GetConfigOption<bool>((string)conditionDef["config"]);
         }
     }
 }

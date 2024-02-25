@@ -73,14 +73,19 @@ namespace loaforcsSoundAPI.Patches {
             int totalWeight = 0;
             replacements.ForEach(replacement => totalWeight += replacement.Weight);
 
-            int chosenWeight = matchedString.Group.Random.Range(matchedString.Group, 0, totalWeight);
-            while (chosenWeight > 0) {
-                chosenWeight -= replacements[0].Weight;
-                replacements.RemoveAt(0);
 
-                if (replacements.Count == 1) break;
+
+            int chosenWeight = matchedString.Group.Random.Range(matchedString.Group, 0, totalWeight);
+            SoundPlugin.logger.LogDebug($"totalWeight: {totalWeight}, chosenWeight: {chosenWeight}");
+            int chosen = 0;
+            while (chosenWeight > 0) {
+                chosen = matchedString.Group.Random.Range(matchedString.Group, 0, replacements.Count);
+                SoundPlugin.logger.LogDebug($"removing between 1 and {replacements[chosen].Weight}");
+                chosenWeight -= matchedString.Group.Random.Range(matchedString.Group, 1, replacements[chosen].Weight);
+                SoundPlugin.logger.LogDebug($"chosenWeight is now {chosenWeight}, chosen: {chosen}");
             }
-            return replacements[0].Clip;
+            SoundPlugin.logger.LogDebug($"selected a clip");
+            return replacements[chosen].Clip;
         }
     }
 }

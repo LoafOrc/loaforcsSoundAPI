@@ -13,7 +13,7 @@ namespace loaforcsSoundAPI.Behaviours {
         internal static Dictionary<AudioSource, AudioSourceReplaceHelper> helpers = new Dictionary<AudioSource, AudioSourceReplaceHelper>();
 
         void Start() {
-            if(gameObject == null) { // will prob never happen but ac could be doing some silly stuff
+            if(gameObject == null) {
                 // OH GOD, OH NO, WHAT HAPPENED
                 SoundPlugin.logger.LogError("AAAAAAAAAAA OH GOD, OH NO, WHY IS THE GAMEOBJECT NULL??? THIS IS NOT GOOD. NOT GOOD AT ALL");
                 return;
@@ -21,7 +21,7 @@ namespace loaforcsSoundAPI.Behaviours {
             SoundPlugin.logger.LogDebug(gameObject.name);
 
             if(source == null) {
-                SoundPlugin.logger.LogWarning($"AudioSource (gameObject: {gameObject.name}) become null sometime between OnSceneLoaded() and .Start(), Most likely AdvancedCompany doing some things...");
+                SoundPlugin.logger.LogWarning($"AudioSource (on gameobject: {gameObject.name}) became null between LevelLoad callback and Start. This shouldn't have happened. Most likely another mod caused this.");
                 return;
             }
 

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static UnityEngine.VFX.VisualEffectControlTrackController;
 
 namespace loaforcsSoundAPI.Behaviours {
     internal class SoundReplacerHandler : MonoBehaviour {

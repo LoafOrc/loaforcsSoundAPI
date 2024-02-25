@@ -15,7 +15,10 @@ loaforcsSoundAPI makes use of Multithreading, splitting sound loading into two s
 loaforcsSoundAPI affords a Sound-Pack creator much more control over how their sounds are played and how they organise. 
 
 A [simple tutorial](https://github.com/LoafOrc/loaforcsSoundAPI/wiki/Making-a-simple-Sound%E2%80%90Pack) to make a sound pack is available in the github wiki.
+A couple [templates](https://github.com/LoafOrc/loaforcsSoundAPI-examples) are avaliable as well.
 ### Main Benefits
 - Custom File Structure Hierachy
 - Intuitive variations for sounds
 - Mapping multiple sounds to the same sounds
+- Sound-packs can create config options just like regular mods
+- Swap out audio clips live based on what is happening ingame.
