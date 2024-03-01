@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static UnityEngine.VFX.VisualEffectControlTrackController;
 
 namespace loaforcsSoundAPI.Behaviours {
     internal class SoundReplacerHandler : MonoBehaviour {
@@ -17,23 +16,13 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void ProcessNewScene(Scene scene, LoadSceneMode __) {
             foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
-                /*
-                AudioClip replacement = AudioSourcePatch.GetReplacementClip(AudioSourcePatch.ProcessName(source, source.clip));
-                if (replacement != null) {
-                    replacement.name = source.clip.name;
-                    source.clip = replacement;
-                }
-                */
-                source.Stop();
+                if(source.gameObject.scene != scene) continue; // already processed
 
-                if(source.TryGetComponent(out AudioSourceReplaceHelper ext)) {
-                    SoundPlugin.logger.LogWarning("Multiple audio sources on one gameobject, this is unsupported right now!");
-                } else {
-                    ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
-                    ext.source = source;
-                    ext.playOnAwake = source.playOnAwake;
-                    source.playOnAwake = false;
-                }
+                if(source.playOnAwake)
+                   source.Stop();
+
+                AudioSourceReplaceHelper ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                ext.source = source;
             }
         }
     }

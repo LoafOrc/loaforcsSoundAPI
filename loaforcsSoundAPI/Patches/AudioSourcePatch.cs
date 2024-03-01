@@ -1,5 +1,7 @@
 ﻿using BepInEx;
 using HarmonyLib;
+using loaforcsSoundAPI.API;
+using loaforcsSoundAPI.Behaviours;
 using loaforcsSoundAPI.Data;
 using System;
 using System.Collections.Generic;
@@ -16,68 +18,72 @@ namespace loaforcsSoundAPI.Patches {
             HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) })
         ]
         internal static void Play(AudioSource __instance) {
-            AudioClip replacement = GetReplacementClip(ProcessName(__instance, __instance.clip));
+            AudioClip replacement = GetReplacementClip(ProcessName(__instance, __instance.clip), out SoundReplacementCollection collection);
             if (replacement != null) {
                 replacement.name = __instance.clip.name;
                 __instance.clip = replacement;
+                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
             }
         }
 
         [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.PlayOneShot), new Type[] { typeof(AudioClip), typeof(float) })]
         internal static void PlayOneShot(AudioSource __instance, ref AudioClip clip) {
-            AudioClip replacement = GetReplacementClip(ProcessName(__instance, clip));
+            AudioClip replacement = GetReplacementClip(ProcessName(__instance, clip), out SoundReplacementCollection collection);
             if (replacement != null) {
                 replacement.name = clip.name;
                 clip = replacement;
+                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
             }
+        }
+
+        internal static string TrimGameObjectName(GameObject gameObject) {
+            string name = gameObject.name.Replace("(Clone)", "");
+            for (int i = 0; i < 10; i++) {
+                name = name.Replace("(" + i + ")", "");
+            }
+
+            return name.Trim();
         }
 
         internal static string ProcessName(AudioSource source, AudioClip clip) {
             if (clip == null) return null;
-            string filteredgameObjectName = ":" + source.gameObject.name.Replace("(Clone)", "").Trim();
+            string filteredgameObjectName = ":" + TrimGameObjectName(source.gameObject);
             if(source.transform.parent != null) {
-                filteredgameObjectName = source.transform.parent.name.Replace("(Clone)", "").Trim() + filteredgameObjectName;
+                filteredgameObjectName = TrimGameObjectName(source.transform.parent.gameObject) + filteredgameObjectName;
             }
-            
-            /*
-            if(!SoundPlugin.UniqueSounds.Contains($"{filteredgameObjectName}:{clip.name}")) {
-                SoundPlugin.UniqueSounds.Add($"{filteredgameObjectName}:{clip.name}");
-                using (StreamWriter sw = new StreamWriter(Path.Combine(Paths.PluginPath, "unique_sounds.txt"), true)) {
-                    // Append the new line
-                    foreach(var sound in SoundPlugin.UniqueSounds) { sw.WriteLine(sound); }
-                }   
-            }*/
 
             return $"{filteredgameObjectName}:{clip.name}";
         }
 
-        internal static AudioClip GetReplacementClip(string name) {
+        internal static AudioClip GetReplacementClip(string name, out SoundReplacementCollection collection) {
+            collection = null;
             if(name == null) return null;
-            SoundPlugin.logger.LogDebug("Getting replacement for: " + name);
+            SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
 
-            if (!SoundReplaceGroup.GlobalSoundReplacements.ContainsKey(name.Split(":")[2])) return null;
+            if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { SoundPlugin.logger.LogDebug("bailing early"); return null; }
 
-            SoundMatchString matchedString = null;
-            foreach(SoundMatchString matchString in SoundReplaceGroup.GlobalSoundReplacements[name.Split(":")[2]]) {
-                if(matchString.Matches(name)) {
-                    matchedString = matchString; break;
-                }
+            List<SoundReplacementCollection> possibleCollections = SoundReplacementAPI.SoundReplacements[name.Split(":")[2]]
+                .Where(x => x.MatchesWith(name))
+                .Where(x => x.TestCondition())
+                .ToList();
+
+            if (possibleCollections.Count == 0) return null;
+            if(possibleCollections.Count > 1) {
+                SoundPlugin.logger.LogWarning("Multiple soundpacks are replacing the same sounds, choosing a random one.");
             }
+            collection = possibleCollections[UnityEngine.Random.Range(0, possibleCollections.Count)];
+            List<SoundReplacement> replacements = collection.replacements.Where(x => x.TestCondition()).ToList();
 
-            if (matchedString == null) return null;
-
-            List<SoundReplacement> replacements = new List<SoundReplacement>(matchedString.Group.SoundReplacements[matchedString]);
             int totalWeight = 0;
             replacements.ForEach(replacement => totalWeight += replacement.Weight);
 
-            int chosenWeight = matchedString.Group.Random.Range(matchedString.Group, 0, totalWeight);
+            int chosenWeight = collection.group.Random.Range(collection.group, 0, totalWeight);
+            int chosen = 0;
             while (chosenWeight > 0) {
-                chosenWeight -= replacements[0].Weight;
-                replacements.RemoveAt(0);
-
-                if (replacements.Count == 1) break;
+                chosen = collection.group.Random.Range(collection.group, 0, replacements.Count);
+                chosenWeight -= collection.group.Random.Range(collection.group, 1, replacements[chosen].Weight);
             }
-            return replacements[0].Clip;
+            return replacements[chosen].Clip;
         }
     }
 }

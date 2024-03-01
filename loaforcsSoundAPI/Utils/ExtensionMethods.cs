@@ -18,5 +18,9 @@ namespace loaforcsSoundAPI.Utils {
         public static TValue GetValueOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> defaultValueProvider) {
             return dictionary.TryGetValue(key, out var value) ? value : defaultValueProvider();
         }
+
+        public static bool IsNumber(this object @object) {
+            return @object is int || @object is double || @object is float;
+        }
     }
 }
