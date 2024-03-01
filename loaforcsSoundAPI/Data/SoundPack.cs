@@ -52,7 +52,7 @@ namespace loaforcsSoundAPI.Data {
             } else {
                 loadOnStartup = jsonData.GetValueOrDefault("load_on_startup", new string[0]).Select(name => { return name + ".json"; }).ToArray();
 
-                if(loadOnStartup.Length == 0) {
+                if(!jsonData.ContainsKey("load_on_startup")) {
                     SoundPlugin.logger.LogWarning($"No replacers were defined in `replacers` so every single replacer is being loaded on start-up. Consider adding some so that loaforcsSoundAPI can use multithreading.");
                     loadOnStartup = Directory.GetFiles(Path.Combine(PackPath, "replacers")).Select(Path.GetFileName).ToArray();
                 }
@@ -129,13 +129,15 @@ namespace loaforcsSoundAPI.Data {
         internal void LoadNonStartupGroups() {
             if (!Directory.Exists(Path.Combine(PackPath, "replacers"))) return;
             Stopwatch loadTime = Stopwatch.StartNew();
-            string[] nonStartup = Directory.GetFiles(Path.Combine(PackPath, "replacers")).Where(replacer => { return !loadOnStartup.Contains(replacer); }).Select(Path.GetFileName).ToArray();
+            SoundPlugin.logger.LogDebug(string.Join(",", loadOnStartup));
+            string[] nonStartup = Directory.GetFiles(Path.Combine(PackPath, "replacers")).Select(Path.GetFileName).Where(replacer => { return !loadOnStartup.Contains(replacer); }).ToArray();
             HandleReplacers(nonStartup);
             loadTime.Stop();
             SoundPlugin.logger.LogInfo($"Loaded {Name}(non-startup) in {loadTime.ElapsedMilliseconds}ms.");
         }
         private void HandleReplacers(string[] replacers) {
             foreach(string replacer in replacers) {
+
                 string filePath = Path.Combine(PackPath, "replacers", replacer);
                 SoundPlugin.logger.LogDebug($"Parsing `{Path.GetFileName(filePath)}` as a sound replacer");
                 string data = File.ReadAllText(filePath);
