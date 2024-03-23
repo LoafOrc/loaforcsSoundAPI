@@ -1,5 +1,5 @@
 ﻿using loaforcsSoundAPI.API;
-using loaforcsSoundAPI.LethalCompany.Variables;
+using loaforcsSoundAPI.LethalCompany.Conditions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,10 +7,10 @@ using System.Text;
 namespace loaforcsSoundAPI.LethalCompany;
 internal static class LethalCompanyBindings {
     internal static void Bind() {
-        SoundReplacementAPI.RegisterVariableProvider("CurrentDungeonName", new DungeonVariableProvider());
-        SoundReplacementAPI.RegisterVariableProvider("CurrentMoonName", new MoonVariableProvider());
-        SoundReplacementAPI.RegisterVariableProvider("PlayerHealth", new PlayerHealthVariableProvider());
-        SoundReplacementAPI.RegisterVariableProvider("TimeOfDayType", new TimeOfDayVariableProvider());
-        SoundReplacementAPI.RegisterVariableProvider("PlayerLocationType", new PlayerLocationTypeVariableProvider());
+        SoundReplacementAPI.RegisterConditionProvider("CurrentDungeonName", new DungeonConditionProvider());
+        SoundReplacementAPI.RegisterConditionProvider("CurrentMoonName", new MoonConditionProvider());
+        SoundReplacementAPI.RegisterConditionProvider("PlayerHealth", new PlayerHealthConditionProvider());
+        SoundReplacementAPI.RegisterConditionProvider("TimeOfDayType", new TimeOfDayConditionProvider());
+        SoundReplacementAPI.RegisterConditionProvider("PlayerLocationType", new PlayerLocationTypeConditionProvider());
     }
 }

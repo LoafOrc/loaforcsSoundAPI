@@ -1,25 +1,19 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.IO;
-using System;
-using System.Reflection;
-using UnityEngine;
-using loaforcsSoundAPI.Data;
-using System.Collections.Generic;
-using System.Linq;
-using loaforcsSoundAPI.Behaviours;
-using System.Threading;
 using loaforcsSoundAPI.API;
+using loaforcsSoundAPI.Behaviours;
+using loaforcsSoundAPI.Data;
+using loaforcsSoundAPI.LethalCompany;
+using loaforcsSoundAPI.Providers.Conditions;
 using loaforcsSoundAPI.Providers.Formats;
 using loaforcsSoundAPI.Providers.Random;
-using loaforcsSoundAPI.Providers.Conditions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using loaforcsSoundAPI.Providers.Variables;
-using loaforcsSoundAPI.LethalCompany;
-using UnityEngine.SceneManagement;
 using loaforcsSoundAPI.Utils;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace loaforcsSoundAPI {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -40,14 +34,6 @@ namespace loaforcsSoundAPI {
             logger.LogInfo("Patching...");
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID);
 
-            /*
-            // Read all lines from the file
-            if(File.Exists(Path.Combine(Paths.PluginPath, "unique_sounds.txt")))
-                UniqueSounds = File.ReadAllLines(Path.Combine(Paths.PluginPath, "unique_sounds.txt")).ToList();
-            else
-                UniqueSounds = new List<string>();
-            */
-
             logger.LogInfo("Setting up config...");
             new SoundPluginConfig(Config);
 
@@ -66,13 +52,7 @@ namespace loaforcsSoundAPI {
 
             logger.LogInfo("Bindings => General => Conditions");
             SoundReplacementAPI.RegisterConditionProvider("config", new ConfigCondition());
-            SoundReplacementAPI.RegisterConditionProvider("equal", new EqualsCondition());
-            SoundReplacementAPI.RegisterConditionProvider("greater_than", new GreaterThanCondition());
-            SoundReplacementAPI.RegisterConditionProvider("greater_than_or_equal", new GreaterThanOrEqualCondition());
             SoundReplacementAPI.RegisterConditionProvider("mod_installed", new ModInstalledConditionProvider());
-
-            logger.LogInfo("Bindings => General => Variables");
-            SoundReplacementAPI.RegisterVariableProvider("config", new ConfigVariableProvider());
 
             LethalCompanyBindings.Bind();
 
@@ -97,21 +77,8 @@ namespace loaforcsSoundAPI {
                 }
             }
 
-            /*
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.potatoepet.AdvancedCompany")) {
-                logger.LogWarning("========================");
-                logger.LogWarning("JUST A HEADS UP!");
-                logger.LogWarning("----------------");
-                logger.LogWarning("You have AdvancedCompany installed,");
-                logger.LogWarning("AdvancedCompany currently causes incompatibilites with loaforcsSoundAPI");
-                logger.LogWarning("For more info go to this github issue:");
-                logger.LogWarning("https://github.com/FluffyFishGames/AdvancedCompany/issues/130");
-                logger.LogWarning("========================");
-            }
-            */
-
             logger.LogInfo("Starting up JoinableThreadPool.");
-            nonstartupThreadPool = new JoinableThreadPool();
+            nonstartupThreadPool = new JoinableThreadPool(SoundPluginConfig.THREADPOOL_MAX_THREADS.Value);
 
             foreach(SoundPack pack in SoundPacks) {
                 pack.QueueNonStartupOnThreadPool(nonstartupThreadPool);

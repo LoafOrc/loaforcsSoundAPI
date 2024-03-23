@@ -34,6 +34,10 @@ namespace loaforcsSoundAPI.Data {
             return ((ConfigEntry<T>) Config[configID]).Value;
         }
 
+        internal object GetRawConfigOption(string configID) {
+            return Config[configID];
+        }
+
         public SoundPack(string folder) {
             SoundPlugin.logger.LogDebug($"Soundpack `{folder}` is being loaded.");
             Stopwatch loadTime = Stopwatch.StartNew();
@@ -97,20 +101,12 @@ namespace loaforcsSoundAPI.Data {
                             );
                             break;
                         case JTokenType.Float:
-                            Config.Add(
-                                configDef.Name,
-                                configFile.Bind(configDef.Name.Split(":")[0],
-                                configDef.Name.Split(":")[1],
-                                (float)configSettings["default"],
-                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
-                            );
-                            break;
                         case JTokenType.Integer:
                             Config.Add(
                                 configDef.Name,
                                 configFile.Bind(configDef.Name.Split(":")[0],
                                 configDef.Name.Split(":")[1],
-                                (int)configSettings["default"],
+                                (float)configSettings["default"],
                                 configSettings.GetValueOrDefault("description", "[no description was provided]"))
                             );
                             break;
