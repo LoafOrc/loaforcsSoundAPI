@@ -18,6 +18,10 @@ namespace loaforcsSoundAPI.Patches {
             HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) })
         ]
         internal static void Play(AudioSource __instance) {
+            if(__instance.gameObject == null) {
+                SoundPlugin.logger.LogWarning("AudioSource has no GameObject!!");
+                return;
+            }
             AudioClip replacement = GetReplacementClip(ProcessName(__instance, __instance.clip), out SoundReplacementCollection collection);
             if (replacement != null) {
                 replacement.name = __instance.clip.name;
@@ -36,6 +40,10 @@ namespace loaforcsSoundAPI.Patches {
 
         [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.PlayOneShot), new Type[] { typeof(AudioClip), typeof(float) })]
         internal static void PlayOneShot(AudioSource __instance, ref AudioClip clip) {
+            if(__instance.gameObject == null) {
+                SoundPlugin.logger.LogWarning("AudioSource has no GameObject!!");
+                return;
+            }
             AudioClip replacement = GetReplacementClip(ProcessName(__instance, clip), out SoundReplacementCollection collection);
             if (replacement != null) {
                 replacement.name = clip.name;
