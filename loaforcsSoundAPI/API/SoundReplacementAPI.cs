@@ -1,5 +1,6 @@
 ﻿using loaforcsSoundAPI.Data;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,7 +11,7 @@ namespace loaforcsSoundAPI.API {
         internal static Dictionary<string, ConditionProvider> ConditionProviders = new Dictionary<string, ConditionProvider>();
         internal static Dictionary<string, VariableProvider> VariableProviders = new Dictionary<string, VariableProvider>();
 
-        internal static Dictionary<string, List<SoundReplacementCollection>> SoundReplacements = new Dictionary<string, List<SoundReplacementCollection>>();
+        internal static ConcurrentDictionary<string, List<SoundReplacementCollection>> SoundReplacements = new ConcurrentDictionary<string, List<SoundReplacementCollection>>();
 
 
         public static void RegisterAudioFormatProvider(string extension, AudioFormatProvider provider) {

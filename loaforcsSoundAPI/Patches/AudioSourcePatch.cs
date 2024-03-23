@@ -22,7 +22,15 @@ namespace loaforcsSoundAPI.Patches {
             if (replacement != null) {
                 replacement.name = __instance.clip.name;
                 __instance.clip = replacement;
-                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
+                if(!AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
+                    if (__instance.playOnAwake)
+                        __instance.Stop();
+
+                    helper = __instance.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                    helper.source = __instance;
+                }
+                
+                helper.replacedWith = collection;
             }
         }
 
@@ -32,7 +40,15 @@ namespace loaforcsSoundAPI.Patches {
             if (replacement != null) {
                 replacement.name = clip.name;
                 clip = replacement;
-                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
+                if (!AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
+                    if (__instance.playOnAwake)
+                        __instance.Stop();
+
+                    helper = __instance.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                    helper.source = __instance;
+                }
+
+                helper.replacedWith = collection;
             }
         }
 
@@ -60,7 +76,7 @@ namespace loaforcsSoundAPI.Patches {
             if(name == null) return null;
             SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
 
-            if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { SoundPlugin.logger.LogDebug("bailing early"); return null; }
+            if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { return null; }
 
             List<SoundReplacementCollection> possibleCollections = SoundReplacementAPI.SoundReplacements[name.Split(":")[2]]
                 .Where(x => x.MatchesWith(name))

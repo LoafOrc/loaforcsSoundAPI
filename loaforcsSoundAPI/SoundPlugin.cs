@@ -18,6 +18,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using loaforcsSoundAPI.Providers.Variables;
 using loaforcsSoundAPI.LethalCompany;
+using UnityEngine.SceneManagement;
+using loaforcsSoundAPI.Utils;
 
 namespace loaforcsSoundAPI {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -28,6 +30,8 @@ namespace loaforcsSoundAPI {
         internal static List<string> UniqueSounds;
 
         internal static List<SoundPack> SoundPacks = new List<SoundPack>();
+
+        internal JoinableThreadPool nonstartupThreadPool;
 
         private void Awake() {
             logger = BepInEx.Logging.Logger.CreateLogSource(MyPluginInfo.PLUGIN_GUID);
@@ -106,25 +110,38 @@ namespace loaforcsSoundAPI {
             }
             */
 
-            logger.LogInfo("Starting second thread...");
-            Thread nonStartup = new Thread(new ThreadStart(LoadNonStartupReplacements));
-            nonStartup.Start();
-            if (!SoundPluginConfig.ENABLE_MULTITHREADING.Value)
-                nonStartup.Join();
-            
-            logger.LogInfo("Starting internal handler");
-            GameObject soundHandler = new GameObject("SoundRepalceHandler");
-            DontDestroyOnLoad(soundHandler);
-            soundHandler.AddComponent<SoundReplacerHandler>();
-            
+            logger.LogInfo("Starting up JoinableThreadPool.");
+            nonstartupThreadPool = new JoinableThreadPool();
+
+            foreach(SoundPack pack in SoundPacks) {
+                pack.QueueNonStartupOnThreadPool(nonstartupThreadPool);
+            }
+
+            nonstartupThreadPool.Start();
+            if(!SoundPluginConfig.ENABLE_MULTITHREADING.Value) {
+                logger.LogInfo("Multithreading is disabled :(, joining that thread pool and blocking the main thread.");
+                nonstartupThreadPool.Join();
+            }
+
+            logger.LogInfo("Registering onSceneLoaded");
+
+            SceneManager.sceneLoaded += (Scene scene, LoadSceneMode __) => {
+                foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
+                    if(source.gameObject.scene != scene) continue; // already processed
+
+                    if(source.playOnAwake)
+                        source.Stop();
+
+                    AudioSourceReplaceHelper ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                    ext.source = source;
+                }
+            };
 
             logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID}:{MyPluginInfo.PLUGIN_VERSION} has loaded!");
         }
 
-        static void LoadNonStartupReplacements() {
-            foreach(SoundPack pack in SoundPacks) {
-                pack.LoadNonStartupGroups();
-            }
+        void OnDisable() {
+            nonstartupThreadPool.Join();
         }
     }
 }
