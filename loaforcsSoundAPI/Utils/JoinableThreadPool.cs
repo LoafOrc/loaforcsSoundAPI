@@ -39,14 +39,18 @@ internal class JoinableThreadPool {
                 Thread thread = new Thread(new ThreadStart(() => {
                     SoundPlugin.logger.LogDebug("[Multithreading] Queued a new thread, at " + active + " out of " + max);
 
-                    action();
+                    try {
+                        action();
+                    } catch (Exception ex) {
+                        SoundPlugin.logger.LogError(ex);
+                    }
                     Interlocked.Decrement(ref active);
                     SoundPlugin.logger.LogDebug("[Multithreading] Thread finished. " + ActionQueue.Count + " actions are left.");
                 }));
                 thread.Start();
 
                 Thread.Yield();
-                Thread.Sleep(50);
+                Thread.Sleep(10);
             }
 
             threadPoolTime.Stop();

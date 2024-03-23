@@ -12,6 +12,7 @@ using loaforcsSoundAPI.Utils;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -48,7 +49,7 @@ namespace loaforcsSoundAPI {
 
             logger.LogInfo("Bindings => General => Random Generators");
             SoundReplacementAPI.RegisterRandomProvider("pure", new PureRandomProvider());
-            SoundReplacementAPI.RegisterRandomProvider("determinstic", new DeterminsticRandomProvider());
+            SoundReplacementAPI.RegisterRandomProvider("deterministic", new DeterminsticRandomProvider());
 
             logger.LogInfo("Bindings => General => Conditions");
             SoundReplacementAPI.RegisterConditionProvider("config", new ConfigCondition());
@@ -86,7 +87,7 @@ namespace loaforcsSoundAPI {
 
             nonstartupThreadPool.Start();
             if(!SoundPluginConfig.ENABLE_MULTITHREADING.Value) {
-                logger.LogInfo("Multithreading is disabled :(, joining that thread pool and blocking the main thread.");
+                logger.LogInfo("Multithreading is disabled :(, joining the thread pool and blocking the main thread.");
                 nonstartupThreadPool.Join();
             }
 

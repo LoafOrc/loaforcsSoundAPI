@@ -13,7 +13,7 @@ namespace loaforcsSoundAPI {
                 "\nThis setting may not be needed with the new 1.0.0 rewrite of multithreading."
                 );
 
-            THREADPOOL_MAX_THREADS = config.Bind("SoundLoading", "MaxThreadsInThreadPool", 4, 
+            THREADPOOL_MAX_THREADS = config.Bind("SoundLoading", "MaxThreadsInThreadPool", 32, 
                 "Max amount of threads the loading thread pool can create at once.\n"+
                 "Increasing this number will decrease loading of non-startup packs but may be unsupported by your CPU."
                 );

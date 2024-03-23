@@ -10,6 +10,6 @@ internal class DungeonConditionProvider : ConditionProvider
 {
     public override bool Evaluate(SoundReplaceGroup group, JObject conditionDef)
     {
-        return conditionDef["name"].Value<string>() == RoundManager.Instance.dungeonGenerator.Generator.DungeonFlow.name;
+        return conditionDef["value"].Value<string>() == RoundManager.Instance.dungeonGenerator.Generator.DungeonFlow.name;
     }
 }

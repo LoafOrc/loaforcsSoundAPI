@@ -8,6 +8,6 @@ using System.Text;
 namespace loaforcsSoundAPI.LethalCompany.Conditions;
 internal class TimeOfDayConditionProvider : ConditionProvider {
     public override bool Evaluate(SoundReplaceGroup group, JObject varDef) {
-        return varDef["time_of_day"].Value<string>() == TimeOfDay.Instance.dayMode.ToString().ToLower();
+        return varDef["value"].Value<string>() == TimeOfDay.Instance.dayMode.ToString().ToLower();
     }
 }

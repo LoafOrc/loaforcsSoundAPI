@@ -8,6 +8,6 @@ using System.Text;
 namespace loaforcsSoundAPI.LethalCompany.Conditions;
 internal class PlayerHealthConditionProvider : ConditionProvider {
     public override bool Evaluate(SoundReplaceGroup group, JObject conditionDef) {
-        return EvaluateRangeOperator(GameNetworkManager.Instance.localPlayerController.health, conditionDef["health"].Value<string>());
+        return EvaluateRangeOperator(GameNetworkManager.Instance.localPlayerController.health, conditionDef["value"].Value<string>());
     }
 }
