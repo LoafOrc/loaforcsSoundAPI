@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace loaforcsSoundAPI.Data {
@@ -31,6 +32,10 @@ namespace loaforcsSoundAPI.Data {
 
         public T GetConfigOption<T>(string configID) {
             return ((ConfigEntry<T>) Config[configID]).Value;
+        }
+
+        internal object GetRawConfigOption(string configID) {
+            return Config[configID];
         }
 
         public SoundPack(string folder) {
@@ -58,7 +63,7 @@ namespace loaforcsSoundAPI.Data {
                 }
                 SoundPlugin.logger.LogInfo($"Loading: {string.Join(",", loadOnStartup)} on startup.");
 
-                HandleReplacers(loadOnStartup);
+                ParseReplacers(loadOnStartup);
             }
 
             if (jsonData.ContainsKey("config")) {
@@ -96,20 +101,12 @@ namespace loaforcsSoundAPI.Data {
                             );
                             break;
                         case JTokenType.Float:
-                            Config.Add(
-                                configDef.Name,
-                                configFile.Bind(configDef.Name.Split(":")[0],
-                                configDef.Name.Split(":")[1],
-                                (float)configSettings["default"],
-                                configSettings.GetValueOrDefault("description", "[no description was provided]"))
-                            );
-                            break;
                         case JTokenType.Integer:
                             Config.Add(
                                 configDef.Name,
                                 configFile.Bind(configDef.Name.Split(":")[0],
                                 configDef.Name.Split(":")[1],
-                                (int)configSettings["default"],
+                                (float)configSettings["default"],
                                 configSettings.GetValueOrDefault("description", "[no description was provided]"))
                             );
                             break;
@@ -126,24 +123,31 @@ namespace loaforcsSoundAPI.Data {
             loadTime.Stop();
             SoundPlugin.logger.LogInfo($"Loaded {Name}(start-up) in {loadTime.ElapsedMilliseconds}ms.");
         }
-        internal void LoadNonStartupGroups() {
+        internal void QueueNonStartupOnThreadPool(JoinableThreadPool threadPool) {
             if (!Directory.Exists(Path.Combine(PackPath, "replacers"))) return;
-            Stopwatch loadTime = Stopwatch.StartNew();
-            SoundPlugin.logger.LogDebug(string.Join(",", loadOnStartup));
-            string[] nonStartup = Directory.GetFiles(Path.Combine(PackPath, "replacers")).Select(Path.GetFileName).Where(replacer => { return !loadOnStartup.Contains(replacer); }).ToArray();
-            HandleReplacers(nonStartup);
-            loadTime.Stop();
-            SoundPlugin.logger.LogInfo($"Loaded {Name}(non-startup) in {loadTime.ElapsedMilliseconds}ms.");
-        }
-        private void HandleReplacers(string[] replacers) {
-            foreach(string replacer in replacers) {
+            string[] nonStartup = Directory
+                .GetFiles(Path.Combine(PackPath, "replacers"))
+                .Select(Path.GetFileName)
+                .Where(replacer => { return !loadOnStartup.Contains(replacer); })
+                .ToArray();
 
-                string filePath = Path.Combine(PackPath, "replacers", replacer);
-                SoundPlugin.logger.LogDebug($"Parsing `{Path.GetFileName(filePath)}` as a sound replacer");
-                string data = File.ReadAllText(filePath);
-                JObject jsonData = JsonConvert.DeserializeObject(data) as JObject;
-                new SoundReplaceGroup(this, jsonData);
+            foreach(string replacer in nonStartup) {
+                threadPool.Queue(() => {
+                    ParseReplacer(replacer);
+                });
             }
+        }
+        private void ParseReplacers(string[] replacers) {
+            foreach(string replacer in replacers) {
+                ParseReplacer(replacer);
+            }
+        }
+
+        private void ParseReplacer(string replacer) {
+            string filePath = Path.Combine(PackPath, "replacers", replacer);
+            SoundPlugin.logger.LogDebug($"Parsing `{Path.GetFileName(filePath)}` as a sound replacer");
+            JObject jsonData = JsonConvert.DeserializeObject(File.ReadAllText(filePath)) as JObject;
+            new SoundReplaceGroup(this, jsonData);
         }
     }
 }

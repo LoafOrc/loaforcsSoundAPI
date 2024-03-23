@@ -18,21 +18,51 @@ namespace loaforcsSoundAPI.Patches {
             HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) })
         ]
         internal static void Play(AudioSource __instance) {
+            if(__instance.gameObject == null) {
+                SoundPlugin.logger.LogWarning("AudioSource has no GameObject!!");
+                return;
+            }
+            if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
+                if(helper.DisableReplacing) return;
+            }
             AudioClip replacement = GetReplacementClip(ProcessName(__instance, __instance.clip), out SoundReplacementCollection collection);
             if (replacement != null) {
                 replacement.name = __instance.clip.name;
                 __instance.clip = replacement;
-                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
+                if(helper == null) {
+                    if (__instance.playOnAwake)
+                        __instance.Stop();
+
+                    helper = __instance.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                    helper.source = __instance;
+                }
+                
+                helper.replacedWith = collection;
             }
         }
 
         [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.PlayOneShot), new Type[] { typeof(AudioClip), typeof(float) })]
         internal static void PlayOneShot(AudioSource __instance, ref AudioClip clip) {
+            if(__instance.gameObject == null) {
+                SoundPlugin.logger.LogWarning("AudioSource has no GameObject!!");
+                return;
+            }
+            if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
+                if(helper.DisableReplacing) return;
+            }
             AudioClip replacement = GetReplacementClip(ProcessName(__instance, clip), out SoundReplacementCollection collection);
             if (replacement != null) {
+                if (helper == null) {
+                    if (__instance.playOnAwake)
+                        __instance.Stop();
+
+                    helper = __instance.gameObject.AddComponent<AudioSourceReplaceHelper>();
+                    helper.source = __instance;
+                }
                 replacement.name = clip.name;
                 clip = replacement;
-                AudioSourceReplaceHelper.helpers[__instance].replacedWith = collection;
+
+                helper.replacedWith = collection;
             }
         }
 
@@ -58,9 +88,9 @@ namespace loaforcsSoundAPI.Patches {
         internal static AudioClip GetReplacementClip(string name, out SoundReplacementCollection collection) {
             collection = null;
             if(name == null) return null;
-            SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
+            //SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
 
-            if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { SoundPlugin.logger.LogDebug("bailing early"); return null; }
+            if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { return null; }
 
             List<SoundReplacementCollection> possibleCollections = SoundReplacementAPI.SoundReplacements[name.Split(":")[2]]
                 .Where(x => x.MatchesWith(name))
@@ -69,10 +99,11 @@ namespace loaforcsSoundAPI.Patches {
 
             if (possibleCollections.Count == 0) return null;
             if(possibleCollections.Count > 1) {
-                SoundPlugin.logger.LogWarning("Multiple soundpacks are replacing the same sounds, choosing a random one.");
+                //SoundPlugin.logger.LogWarning("Multiple soundpacks are replacing the same sounds, choosing a random one.");
             }
             collection = possibleCollections[UnityEngine.Random.Range(0, possibleCollections.Count)];
             List<SoundReplacement> replacements = collection.replacements.Where(x => x.TestCondition()).ToList();
+            if(replacements.Count == 0) return null;
 
             int totalWeight = 0;
             replacements.ForEach(replacement => totalWeight += replacement.Weight);

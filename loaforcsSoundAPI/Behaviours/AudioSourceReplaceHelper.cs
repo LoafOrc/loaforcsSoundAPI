@@ -13,6 +13,8 @@ namespace loaforcsSoundAPI.Behaviours {
 
         internal static Dictionary<AudioSource, AudioSourceReplaceHelper> helpers = new Dictionary<AudioSource, AudioSourceReplaceHelper>();
 
+        public bool DisableReplacing { get; private set; } = false;
+
         void Start() {
             if(source == null) {
                 SoundPlugin.logger.LogWarning($"AudioSource (on gameobject: {gameObject.name}) became null between the OnSceneLoaded callback and Start. This is most likely because of another mod.");
@@ -33,22 +35,18 @@ namespace loaforcsSoundAPI.Behaviours {
         void LateUpdate() {
             if (replacedWith == null) return;
             if (!replacedWith.group.UpdateEveryFrame) return;
+            DisableReplacing = true;
 
             float currentTime = source.time;
 
-            List<SoundReplacement> replacements = replacedWith.replacements.Where(x => x.TestCondition()).ToList();
-            int totalWeight = 0;
+            SoundReplacement replacement = replacedWith.replacements.Where(x => x.TestCondition()).ToList()[0];
 
-            replacements.ForEach(replacement => totalWeight += replacement.Weight);
-
-            int chosenWeight = replacedWith.group.Random.Range(replacedWith.group, 0, totalWeight);
-            int chosen = 0;
-            while (chosenWeight > 0) {
-                chosen = replacedWith.group.Random.Range(replacedWith.group, 0, replacements.Count);
-                chosenWeight -= replacedWith.group.Random.Range(replacedWith.group, 1, replacements[chosen].Weight);
+            if(replacement.Clip == source.clip) {
+                return;
             }
 
-            source.clip = replacements[chosen].Clip;
+            source.clip = replacement.Clip;
+            source.Play();
             source.time = currentTime;
         }
     }

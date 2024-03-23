@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace loaforcsSoundAPI.Providers.Conditions;
-internal class ModInstalledConditionProvider : ConditionProvider {
+namespace loaforcsSoundAPI.LethalCompany.Conditions;
+internal class MoonConditionProvider : ConditionProvider {
     public override bool Evaluate(SoundReplaceGroup group, JObject conditionDef) {
-        return BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey((string)conditionDef["value"]);
+        return conditionDef["value"].Value<string>() == StartOfRound.Instance.currentLevel.name;
     }
 }

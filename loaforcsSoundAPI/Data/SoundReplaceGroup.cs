@@ -25,11 +25,12 @@ namespace loaforcsSoundAPI.Data {
                 new SoundReplacementCollection(this, replacer);
             }
 
+            Random = SoundReplacementAPI.RandomProviders["pure"];
             if(data.ContainsKey("randomness")) {
                 RandomSettings = data["randomness"] as JObject;
-                Random = SoundReplacementAPI.RandomProviders[(string)RandomSettings["type"]];
-            } else {
-                Random = SoundReplacementAPI.RandomProviders["pure"];
+                if(SoundReplacementAPI.RandomProviders.ContainsKey((string)RandomSettings["type"])) {
+                    Random = SoundReplacementAPI.RandomProviders[(string)RandomSettings["type"]];
+                }
             }
 
             if(data.ContainsKey("condition")) {
