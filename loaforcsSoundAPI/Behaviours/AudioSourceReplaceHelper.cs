@@ -17,19 +17,27 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void Start() {
             if(source == null) {
-                SoundPlugin.logger.LogWarning($"AudioSource (on gameobject: {gameObject.name}) became null between the OnSceneLoaded callback and Start. This is most likely because of another mod.");
+                SoundPlugin.logger.LogWarning($"AudioSource (on gameobject: {gameObject.name}) became null between the OnSceneLoaded callback and Start.");
                 return;
             }
 
-            if (source.playOnAwake && source.enabled) {
+            if(source.playOnAwake && source.enabled) {
                 source.Play();
             }
 
             helpers[source] = this;
         }
 
+        void OnEnable() {
+            if(source == null) return;
+
+            helpers[source] = this;
+        }
+
         void OnDestroy() {
-            helpers.Remove(source);
+            if(source == null) return;
+            if(helpers.ContainsKey(source))          
+                helpers.Remove(source);
         }
 
         void LateUpdate() {

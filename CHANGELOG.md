@@ -14,6 +14,21 @@ Changed:
 Fixed:
 - Added more null checks, should be more compatible with LittleCompany.
 
+### v1.0.2
+- Fixed an issue where AudioSourceReplaceHandler would try to unregister itself multiple times.
+
+### v1.0.3
+- Maybe registering stuff would help.
+
+### v1.0.4
+- Temporary debug logs for conditions
+
+### v1.0.5
+- More null checks
+
+### v1.0.6
+- :skull:
+
 <details>
 <summary>Old Versions</summary>
 

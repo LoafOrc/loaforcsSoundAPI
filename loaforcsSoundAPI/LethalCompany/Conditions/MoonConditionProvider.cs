@@ -8,6 +8,7 @@ using System.Text;
 namespace loaforcsSoundAPI.LethalCompany.Conditions;
 internal class MoonConditionProvider : ConditionProvider {
     public override bool Evaluate(SoundReplaceGroup group, JObject conditionDef) {
+        SoundPlugin.logger.LogDebug("LethalCompany:moon_name value: " + StartOfRound.Instance.currentLevel.name);
         return conditionDef["value"].Value<string>() == StartOfRound.Instance.currentLevel.name;
     }
 }

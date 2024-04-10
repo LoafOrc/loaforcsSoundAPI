@@ -54,6 +54,10 @@ namespace loaforcsSoundAPI {
             logger.LogInfo("Bindings => General => Conditions");
             SoundReplacementAPI.RegisterConditionProvider("config", new ConfigCondition());
             SoundReplacementAPI.RegisterConditionProvider("mod_installed", new ModInstalledConditionProvider());
+            SoundReplacementAPI.RegisterConditionProvider("and", new AndCondition());
+            SoundReplacementAPI.RegisterConditionProvider("not", new NotCondition());
+            SoundReplacementAPI.RegisterConditionProvider("or", new OrCondition());
+
 
             LethalCompanyBindings.Bind();
 
@@ -97,8 +101,10 @@ namespace loaforcsSoundAPI {
                 foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
                     if(source.gameObject.scene != scene) continue; // already processed
 
-                    if(source.playOnAwake)
+
+                    if(source.playOnAwake) {
                         source.Stop();
+                    }
 
                     AudioSourceReplaceHelper ext = source.gameObject.AddComponent<AudioSourceReplaceHelper>();
                     ext.source = source;

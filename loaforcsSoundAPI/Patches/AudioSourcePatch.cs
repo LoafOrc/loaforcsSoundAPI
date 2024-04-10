@@ -88,7 +88,7 @@ namespace loaforcsSoundAPI.Patches {
         internal static AudioClip GetReplacementClip(string name, out SoundReplacementCollection collection) {
             collection = null;
             if(name == null) return null;
-            //SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
+            SoundPlugin.logger.LogDebug($"Getting replacement for: {name} (doing top level search for {name.Split(":")[2]})");
 
             if (!SoundReplacementAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { return null; }
 
