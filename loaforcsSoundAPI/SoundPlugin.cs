@@ -65,7 +65,7 @@ namespace loaforcsSoundAPI {
                 // Combine the current subdirectory with the file name
                 foreach (string subsubdirectory in Directory.GetDirectories(subdirectory)) {
                     string subfilePath = Path.Combine(subsubdirectory, "sound_pack.json");
-                    Logger.LogDebug(subsubdirectory);
+                    logger.LogDebug(subsubdirectory);
 
                     // Check if the file exists
                     if (File.Exists(subfilePath)) {
