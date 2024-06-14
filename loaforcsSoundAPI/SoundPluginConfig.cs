@@ -7,6 +7,7 @@ namespace loaforcsSoundAPI {
     internal class SoundPluginConfig {
         internal static ConfigEntry<bool> ENABLE_MULTITHREADING;
         internal static ConfigEntry<int> THREADPOOL_MAX_THREADS;
+        internal static ConfigEntry<bool> ENABLE_DEBUGLOGGING;
         internal SoundPluginConfig(ConfigFile config) {
             ENABLE_MULTITHREADING = config.Bind("SoundLoading", "Multithreading", true, 
                 "Whether or not to use multithreading when loading a sound pack. If you haven't been told that you should disable multithreading, you probably don't need to!"+
@@ -16,6 +17,10 @@ namespace loaforcsSoundAPI {
             THREADPOOL_MAX_THREADS = config.Bind("SoundLoading", "MaxThreadsInThreadPool", 32, 
                 "Max amount of threads the loading thread pool can create at once.\n"+
                 "Increasing this number will decrease loading of non-startup packs but may be unsupported by your CPU."
+                );
+
+            ENABLE_DEBUGLOGGING = config.Bind("Logging", "LogSounds", false,
+                "Whether or not to show logs for sounds playing. Only recommended whilst developing sound mods."
                 );
         }
     }

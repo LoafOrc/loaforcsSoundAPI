@@ -32,7 +32,10 @@ namespace loaforcsSoundAPI.API {
         }
 
         public static bool MatchStrings(string a, string b) {
-            SoundPlugin.logger.LogDebug($"{a} == {b}?");
+            if (SoundPluginConfig.ENABLE_DEBUGLOGGING.Value)
+            {
+                SoundPlugin.logger.LogDebug($"{a} == {b}?");
+            }
             string[] testing = a.Split(":");
             string[] expected = b.Split(":");
             if (expected[0] != "*" && expected[0] != testing[0]) return false; // parent gameobject mismatch
