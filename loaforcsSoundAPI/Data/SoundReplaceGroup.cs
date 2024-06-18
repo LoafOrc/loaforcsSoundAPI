@@ -17,15 +17,23 @@ namespace loaforcsSoundAPI.Data {
         internal JObject RandomSettings { get; private set; }
 
         internal bool UpdateEveryFrame { get; private set; } = false;
-
+        
         public SoundReplaceGroup(SoundPack pack, JObject data) {
             this.pack = pack;
-            foreach(JObject replacer in data["replacements"]) {
-                new SoundReplacementCollection(this, replacer);
-            }
-
             if(data.ContainsKey("condition")) {
                 Setup(this, data["condition"] as JObject);
+                
+                if ((string)data["condition"]["type"] == "config" && SoundPluginConfig.SKIP_LOADING_UNUSED_SOUNDS.Value) {
+                    if (!TestCondition()) {
+                        SoundPlugin.logger.LogLosingIt("Skipping loading SoundReplaceGroup because the config is disabled..");
+                        return;
+                    }
+                }
+            }
+            
+            
+            foreach(JObject replacer in data["replacements"]) {
+                new SoundReplacementCollection(this, replacer);
             }
 
             if(data.ContainsKey("update_every_frame")) {

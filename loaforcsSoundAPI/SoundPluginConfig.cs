@@ -7,6 +7,7 @@ namespace loaforcsSoundAPI {
     internal class SoundPluginConfig {
         internal static ConfigEntry<bool> ENABLE_MULTITHREADING;
         internal static ConfigEntry<int> THREADPOOL_MAX_THREADS;
+        internal static ConfigEntry<bool> SKIP_LOADING_UNUSED_SOUNDS;
 
         internal static ConfigEntry<LoggingLevel> LOGGING_LEVEL;
         
@@ -29,6 +30,10 @@ namespace loaforcsSoundAPI {
                 "Increasing this number will decrease loading of non-startup packs but may be unsupported by your CPU."
                 );
 
+            SKIP_LOADING_UNUSED_SOUNDS = config.Bind("SoundLoading", "SkipLikelyUnusedSounds", true, 
+                "When using only a config loaforcsSoundAPI will be able to skip loading some sounds. This means mods that let you change config mid-game will not take affect until a restart."
+            );
+            
             LOGGING_LEVEL = config.Bind("Logging", "LoggingLevel", LoggingLevel.NORMAL, "What level should sound api log at?");
             
             CONFIG_VERSION = config.Bind("INTERNAL_DO_NOT_TOUCH", "CONFIG_VERSION_DO_NOT_TOUCH", 1, "Don't touch this. This is for internal use only.");
