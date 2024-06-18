@@ -63,15 +63,18 @@ namespace loaforcsSoundAPI.Behaviours {
         }
 
         void LateUpdate() {
-            if (!source.isPlaying && _isPlaying) {
-                if (Loop) {
-                    source.Play();
-                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} succesfully looped!");
-                } else {
-                    _isPlaying = false;
-                    // this literally handles all other audio clips finishing normally lmao
+	    if (source != null)
+	    {
+                if (!source.isPlaying && _isPlaying) {
+                    if (Loop) {
+                        source.Play();
+                        SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} succesfully looped!");
+                    } else {
+                        _isPlaying = false;
+                        // this literally handles all other audio clips finishing normally lmao
+                    }
                 }
-            }
+	    }
             
             if (replacedWith == null) return;
             if (!replacedWith.group.UpdateEveryFrame) return;
