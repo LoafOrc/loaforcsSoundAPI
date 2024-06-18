@@ -5,9 +5,8 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace loaforcsSoundAPI.API {
-    public static class SoundReplacementAPI {
+    public static class SoundAPI {
         internal static Dictionary<string, AudioFormatProvider> FileFormats = new Dictionary<string, AudioFormatProvider>();
-        internal static Dictionary<string, RandomProvider> RandomProviders = new Dictionary<string, RandomProvider>();
         internal static Dictionary<string, ConditionProvider> ConditionProviders = new Dictionary<string, ConditionProvider>();
 
         internal static ConcurrentDictionary<string, List<SoundReplacementCollection>> SoundReplacements = new ConcurrentDictionary<string, List<SoundReplacementCollection>>();
@@ -17,9 +16,6 @@ namespace loaforcsSoundAPI.API {
             FileFormats.Add(extension, provider);
         }
 
-        public static void RegisterRandomProvider(string extension, RandomProvider provider) {
-            RandomProviders.Add(extension, provider);
-        }
         public static void RegisterConditionProvider(string extension, ConditionProvider provider) {
             ConditionProviders.Add(extension, provider);
         }
@@ -32,7 +28,6 @@ namespace loaforcsSoundAPI.API {
         }
 
         public static bool MatchStrings(string a, string b) {
-            SoundPlugin.logger.LogDebug($"{a} == {b}?");
             string[] testing = a.Split(":");
             string[] expected = b.Split(":");
             if (expected[0] != "*" && expected[0] != testing[0]) return false; // parent gameobject mismatch

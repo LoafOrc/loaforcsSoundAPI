@@ -15,25 +15,10 @@ namespace loaforcsSoundAPI.Data {
 
         internal SoundReplacementCollection(SoundReplaceGroup group, JObject data) {
             this.group = group;
-            if (data.ContainsKey("condition")) {
-                Setup(group, data["condition"] as JObject);
+            if (data.TryGetValue("condition", out JToken value)) {
+                Setup(group, value as JObject);
             }
-
-            foreach (JObject sound in data["sounds"]) {
-                SoundReplacement replacement = new(group, sound) {
-                    SoundPath = (string)sound["sound"],
-                    Weight = sound.GetValueOrDefault("weight", 1)
-                };
-
-                SoundLoader.GetAudioClip(group.pack.PackPath, Path.GetDirectoryName(replacement.SoundPath), Path.GetFileName(replacement.SoundPath), out AudioClip clip);
-                if (clip == null) {
-                    SoundPlugin.logger.LogError("Failed to get audio clip, check above more detailed error");
-                } else {
-                    replacement.Clip = clip;
-                    replacements.Add(replacement);
-                }
-            }
-
+            
             if (data["matches"].GetType() == typeof(JValue)) {
                 RegisterWithMatch((string)data["matches"]);
             } else {
@@ -41,21 +26,45 @@ namespace loaforcsSoundAPI.Data {
                     RegisterWithMatch(matchString);
                 }
             }
+
+            foreach (JObject sound in data["sounds"]) {
+
+                if (sound["sound"].Type == JTokenType.Null) {
+                    SoundPlugin.logger.LogExtended("Adding null sound, will remove the sound when chosen");
+                    replacements.Add(new SoundReplacement(group, sound) {
+                        Weight = sound.GetValueOrDefault("weight", 1)
+                    });
+                }
+                else {
+                    SoundReplacement replacement = new(group, sound) {
+                        Weight = sound.GetValueOrDefault("weight", 1)
+                    };
+                    SoundLoader.GetAudioClip(group.pack.PackPath, Path.GetDirectoryName((string)sound["sound"]), Path.GetFileName((string)sound["sound"]), out AudioClip clip);
+                    if (clip == null) {
+                        SoundPlugin.logger.LogError("Failed to get audio clip, check above more detailed error");
+                    } else {
+                        replacement.Clip = clip;
+                        replacements.Add(replacement);
+                    }
+                }
+            }
+
+            
         }
 
         internal bool MatchesWith(string a) {
             foreach(string b in matchers) {
-                if (SoundReplacementAPI.MatchStrings(a, b)) return true;
+                if (SoundAPI.MatchStrings(a, b)) return true;
             }
             return false;
         }
 
         void RegisterWithMatch(string matchString) {
-            string match = SoundReplacementAPI.FormatMatchString(matchString).Split(":")[2];
-            List<SoundReplacementCollection> replacements = SoundReplacementAPI.SoundReplacements.GetValueOrDefault(match, new List<SoundReplacementCollection>());
+            string match = SoundAPI.FormatMatchString(matchString).Split(":")[2];
+            List<SoundReplacementCollection> replacements = SoundAPI.SoundReplacements.GetValueOrDefault(match, new List<SoundReplacementCollection>());
             replacements.Add(this);
-            matchers.Add(SoundReplacementAPI.FormatMatchString(matchString));
-            SoundReplacementAPI.SoundReplacements[match] = replacements;
+            matchers.Add(SoundAPI.FormatMatchString(matchString));
+            SoundAPI.SoundReplacements[match] = replacements;
         }
 
         public override bool TestCondition() {
@@ -64,7 +73,6 @@ namespace loaforcsSoundAPI.Data {
     }
 
     internal class SoundReplacement : Conditonal {
-        public string SoundPath { get; set; }
         public int Weight = 1;
 
         public AudioClip Clip { get; set; }

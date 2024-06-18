@@ -14,7 +14,6 @@ namespace loaforcsSoundAPI.Data {
     public class SoundReplaceGroup : Conditonal {
 
         public SoundPack pack { get; private set; }
-        internal RandomProvider Random { get; private set; }
         internal JObject RandomSettings { get; private set; }
 
         internal bool UpdateEveryFrame { get; private set; } = false;
@@ -25,20 +24,16 @@ namespace loaforcsSoundAPI.Data {
                 new SoundReplacementCollection(this, replacer);
             }
 
-            Random = SoundReplacementAPI.RandomProviders["pure"];
-            if(data.ContainsKey("randomness")) {
-                RandomSettings = data["randomness"] as JObject;
-                if(SoundReplacementAPI.RandomProviders.ContainsKey((string)RandomSettings["type"])) {
-                    Random = SoundReplacementAPI.RandomProviders[(string)RandomSettings["type"]];
-                }
-            }
-
             if(data.ContainsKey("condition")) {
                 Setup(this, data["condition"] as JObject);
             }
 
             if(data.ContainsKey("update_every_frame")) {
                 UpdateEveryFrame = (bool)data["update_every_frame"];
+            }
+
+            if (data.ContainsKey("randomnesss")) {
+                SoundPlugin.logger.LogWarning($"Found deprecated value `randomness` for pack `{pack.Name}`");
             }
         }
     }

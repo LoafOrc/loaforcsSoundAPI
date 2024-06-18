@@ -9,7 +9,7 @@ namespace loaforcsSoundAPI.Providers.Conditions;
 internal class OrCondition : ConditionProvider {
     public override bool Evaluate(SoundReplaceGroup pack, JObject conditionDef) {
         foreach(JObject condition in conditionDef["conditions"]) {
-            if (SoundReplacementAPI.ConditionProviders[(string)condition["type"]].Evaluate(pack, condition)) {
+            if (SoundAPI.ConditionProviders[(string)condition["type"]].Evaluate(pack, condition)) {
                 return true; // a signle thing succeded, we don't need to caluclate the rest
             }
         }

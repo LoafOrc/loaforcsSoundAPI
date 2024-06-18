@@ -17,7 +17,7 @@ public abstract class Conditonal {
         this.group = group;
         if (settings == null) return;
         ConditionSettings = settings;
-        GroupCondition = SoundReplacementAPI.ConditionProviders[(string)ConditionSettings["type"]];
+        GroupCondition = SoundAPI.ConditionProviders[(string)ConditionSettings["type"]];
     }
 
     public virtual bool TestCondition() {

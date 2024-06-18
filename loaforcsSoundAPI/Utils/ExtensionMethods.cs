@@ -20,7 +20,7 @@ namespace loaforcsSoundAPI.Utils {
         }
 
         public static bool IsNumber(this object @object) {
-            return @object is int || @object is double || @object is float;
+            return @object is int or double or float;
         }
     }
 }

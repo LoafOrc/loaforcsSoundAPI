@@ -9,9 +9,6 @@ using UnityEngine.Networking;
 
 namespace loaforcsSoundAPI {
     public static class SoundLoader {
-        internal static Dictionary<string, AudioType> TYPE_MAPPINGS = new Dictionary<string, AudioType> {
-            { ".ogg", AudioType.OGGVORBIS }
-        };
 
         // example input
         // GetAudioClip("SoundAPI_testpack", "player/jump", "player_jump01");
@@ -29,7 +26,7 @@ namespace loaforcsSoundAPI {
             }
 
             // get clip
-            clip = API.SoundReplacementAPI.FileFormats[Path.GetExtension(path).ToLower()].LoadAudioClip(path);
+            clip = SoundAPI.FileFormats[Path.GetExtension(path).ToLower()].LoadAudioClip(path);
 
             // final checks
             if(clip == null) {

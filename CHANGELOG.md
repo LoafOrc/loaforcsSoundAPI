@@ -29,6 +29,17 @@ Fixed:
 ### v1.0.6
 - :skull:
 
+### v1.0.11
+- Deprecated `load_on_startup` (Multithreading is now always before the main menu, so it didn't make sense to have this anymore) and `random` (i've got a better plan for syncing sounds. eventually.)
+- Changed default threads from 32 to 4
+- Slightly improved memory usage
+- Setting `sound` to `null` on a sound replacement will remove the sound if it gets replaced like that.
+- Added timer to multithreaded load times.
+
+### v1.0.12
+- Fixed some sounds just going i no no wanna
+- Added logging levels. You can stop complaining now.
+
 <details>
 <summary>Old Versions</summary>
 
