@@ -12,10 +12,8 @@ using loaforcsSoundAPI.Utils;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Random = Unity.Mathematics.Random;
 
 namespace loaforcsSoundAPI {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
