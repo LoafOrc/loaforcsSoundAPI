@@ -31,10 +31,11 @@ namespace loaforcsSoundAPI.Data {
                 }
             }
             
-            
+            SoundPlugin.logger.LogLosingIt("Loading audio");
             foreach(JObject replacer in data["replacements"]) {
                 new SoundReplacementCollection(this, replacer);
             }
+            SoundPlugin.logger.LogLosingIt("Done loading audio");
 
             if(data.ContainsKey("update_every_frame")) {
                 UpdateEveryFrame = (bool)data["update_every_frame"];

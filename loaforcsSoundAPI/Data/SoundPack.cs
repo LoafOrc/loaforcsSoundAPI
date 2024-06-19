@@ -130,6 +130,7 @@ namespace loaforcsSoundAPI.Data {
             string filePath = Path.Combine(PackPath, "replacers", replacer);
             SoundPlugin.logger.LogDebug($"Parsing `{Path.GetFileName(filePath)}` as a sound replacer");
             JObject jsonData = JsonConvert.DeserializeObject(File.ReadAllText(filePath)) as JObject;
+            SoundPlugin.logger.LogLosingIt("JSON data desrialized!");
             new SoundReplaceGroup(this, jsonData);
         }
     }

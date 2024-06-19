@@ -13,6 +13,7 @@ namespace loaforcsSoundAPI {
         // example input
         // GetAudioClip("SoundAPI_testpack", "player/jump", "player_jump01");
         public static bool GetAudioClip(string packName, string folder, string soundName, out AudioClip clip) {
+            SoundPlugin.logger.LogLosingIt($"Loading sound: {packName}/{folder}/{soundName}");
             // Check if file exists
             // get audio from disk
             // final checks

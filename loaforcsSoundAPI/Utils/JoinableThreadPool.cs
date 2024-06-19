@@ -40,7 +40,7 @@ internal class JoinableThreadPool {
 
     void RunThroughQueue() {
         while(ActionQueue.TryDequeue(out Action action)) {
-
+            SoundPlugin.logger.LogLosingIt("Running next action..");
             try {
                 action();
             } catch(Exception ex) {
