@@ -7,3 +7,9 @@
 - Fixed `update_every_frame` not correctly resetting.
 - Cleared up messaging on deprecated `randomness`
 and like some other internal changes that don't matter :3
+
+### v1.1.1
+- Patch fix for compatiblity issue
+
+### v1.1.2
+- Fix trying to loop an empty audio clip
