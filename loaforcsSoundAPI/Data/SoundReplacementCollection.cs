@@ -52,7 +52,7 @@ namespace loaforcsSoundAPI.Data {
             
         }
 
-        internal bool MatchesWith(string a) {
+        internal bool MatchesWith(string[] a) {
             foreach(string b in matchers) {
                 if (SoundAPI.MatchStrings(a, b)) return true;
             }

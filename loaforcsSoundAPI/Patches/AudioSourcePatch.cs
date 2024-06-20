@@ -13,9 +13,15 @@ using UnityEngine;
 namespace loaforcsSoundAPI.Patches {
     [HarmonyPatch(typeof(AudioSource))]
     internal static class AudioSourcePatch {
+        
+        const int TOKEN_PARENT_NAME = 0;
+        const int TOKEN_OBJECT_NAME = 1;
+        const int TOKEN_CLIP_NAME = 2;
+        
         [HarmonyPrefix,
          HarmonyPatch(nameof(AudioSource.Play), new Type[] { }),
-         HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) })
+         HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(ulong) }),
+             HarmonyPatch(nameof(AudioSource.Play), new Type[] { typeof(double) })
         ]
         static bool Play(AudioSource __instance) {
             if(TryReplaceAudio(__instance, __instance.clip, out AudioClip replacement)) {
@@ -23,7 +29,7 @@ namespace loaforcsSoundAPI.Patches {
                 __instance.clip = replacement;
             }
 
-            if (AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) helper._isPlaying = true;
+            if (AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) { helper._isPlaying = true;}
 
             return true;
         }
@@ -37,7 +43,7 @@ namespace loaforcsSoundAPI.Patches {
 
             return true;
         }
-
+        
         [HarmonyPostfix, HarmonyPatch(nameof(AudioSource.Stop), [typeof(bool)])]
         static void UpdateIsPlayingForHelper(AudioSource __instance) {
             if (AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
@@ -51,7 +57,8 @@ namespace loaforcsSoundAPI.Patches {
         [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.loop), MethodType.Setter)]
         static bool SetAudioSourceLooping(AudioSource __instance, bool value) {
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
-                SoundPlugin.logger.LogLosingIt($"updating looping for {TrimGameObjectName(__instance.gameObject)}, value: {value}");
+                SoundPlugin.logger.LogLosingIt($"updating looping for {__instance.gameObject}, value: {value}");
+                //SoundPlugin.logger.LogTraceback();
                 helper.Loop = value;
                 
                 // only change our stuff
@@ -96,35 +103,36 @@ namespace loaforcsSoundAPI.Patches {
         }
 
         static string TrimGameObjectName(GameObject gameObject) {
+
+            StringBuilder builder = new StringBuilder(gameObject.name);
+            builder.Replace("(Clone)", "");
             
             string name = gameObject.name.Replace("(Clone)", "");
             for (int i = 0; i < 10; i++) {
-                name = name.Replace("(" + i + ")", "");
+                builder.Replace("(" + i + ")", "");
             }
 
-            SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{name.Trim()}`");
-            return name.Trim();
+            SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{builder.ToString().Trim()}`");
+            return builder.ToString().Trim();
         }
-
-        static string ProcessName(AudioSource source, AudioClip clip) {
+        
+        static string[] ProcessName(AudioSource source, AudioClip clip) {
             if (clip == null) return null;
-            string filteredgameObjectName = ":" + TrimGameObjectName(source.gameObject);
-            if(source.transform.parent != null) {
-                filteredgameObjectName = TrimGameObjectName(source.transform.parent.gameObject) + filteredgameObjectName;
+            if(source.transform.parent == null) {
+                return ["*", TrimGameObjectName(source.gameObject), clip.name];
             }
-
-            return $"{filteredgameObjectName}:{clip.name}";
+            return [TrimGameObjectName(source.transform.parent.gameObject), TrimGameObjectName(source.gameObject), clip.name];
         }
 
-        static bool TryGetReplacementClip(string name, out SoundReplacementCollection collection, out AudioClip clip) {
+        static bool TryGetReplacementClip(string[] name, out SoundReplacementCollection collection, out AudioClip clip) {
             collection = null;
             clip = null;
             if(name == null) return false;
-            SoundPlugin.logger.LogExtended($"Getting replacement for: {name}");
+            SoundPlugin.logger.LogExtended($"Getting replacement for: {string.Join(":",name)}");
             
-            if (!SoundAPI.SoundReplacements.ContainsKey(name.Split(":")[2])) { return false; }
+            if (!SoundAPI.SoundReplacements.TryGetValue(name[TOKEN_CLIP_NAME], out List<SoundReplacementCollection> possibleCollections)) { return false; }
 
-            List<SoundReplacementCollection> possibleCollections = SoundAPI.SoundReplacements[name.Split(":")[2]]
+            possibleCollections = possibleCollections
                 .Where(x => x.MatchesWith(name))
                 .Where(x => x.TestCondition())
                 .ToList();

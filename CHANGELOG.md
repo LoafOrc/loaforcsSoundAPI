@@ -13,3 +13,7 @@ and like some other internal changes that don't matter :3
 
 ### v1.1.2
 - Fix trying to loop an empty audio clip
+
+### v1.1.3
+- Turns out running your code lets you do things
+- Converted multithreading to use unitask, yes this is the new new multithreading

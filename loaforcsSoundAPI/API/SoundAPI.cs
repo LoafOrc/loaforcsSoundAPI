@@ -27,12 +27,11 @@ namespace loaforcsSoundAPI.API {
             return input;
         }
 
-        public static bool MatchStrings(string a, string b) {
-            string[] testing = a.Split(":");
+        public static bool MatchStrings(string[] a, string b) {
             string[] expected = b.Split(":");
-            if (expected[0] != "*" && expected[0] != testing[0]) return false; // parent gameobject mismatch
-            if (expected[1] != "*" && expected[1] != testing[1]) return false; // gameobject mismatch
-            return testing[2] == expected[2];
+            if (expected[0] != "*" && expected[0] != a[0]) return false; // parent gameobject mismatch
+            if (expected[1] != "*" && expected[1] != a[1]) return false; // gameobject mismatch
+            return a[2] == expected[2];
         }
     }
 }

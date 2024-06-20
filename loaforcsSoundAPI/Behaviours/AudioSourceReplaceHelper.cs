@@ -17,25 +17,36 @@ namespace loaforcsSoundAPI.Behaviours {
         internal static Dictionary<AudioSource, AudioSourceReplaceHelper> helpers = new Dictionary<AudioSource, AudioSourceReplaceHelper>();
 
         public bool DisableReplacing { get; private set; } = false;
+        
+        bool _loop;
+        public bool Loop {
+            get => _loop;
+            set {
+                SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper looping is now at: {value}");
+                _loop = value;
+            }
+        }
 
-        public bool Loop;
         internal bool _isPlaying;
         
         void Start() {
-            
             if(source == null) {
                 SoundPlugin.logger.LogWarning($"AudioSource (on gameobject: {gameObject.name}) became null between the OnSceneLoaded callback and Start.");
                 return;
             }
-
+            
             string clipName = (source.clip == null ? "null" : source.clip.name);
             SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper.Start(), gameObject: {gameObject.name}, audioClip.name: " + clipName);
  
             if(source.playOnAwake) {
                 if (source.enabled) {
-                    source.Play();
-                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} calling source.Play() because its playOnAwake and enabled.");
-                    _isPlaying = true;
+                    if (source.clip != null) {
+                        source.Play();
+                        SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} calling source.Play() because its playOnAwake and enabled.");
+                        _isPlaying = true;
+                    }
+
+                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} play on awake + enabled + null audio clip. WHYYYYYYY");
                 }
                 else {
                     SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} not calling Play() because its playOnAwake but not enabled.");
@@ -58,15 +69,14 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void OnDestroy() {
             if(source == null) return;
+
+            
             if(helpers.ContainsKey(source))          
                 helpers.Remove(source);
         }
 
         void LateUpdate() {
             if(source == null) return; // this really shouldn't happen!!
-            if (replacedWith == null) return;
-
-            DisableReplacing = replacedWith.group.UpdateEveryFrame || replacedWith.group.IgnoreLooping;
             
             if (_isPlaying) {
                 if (source.clip == null) {
@@ -86,6 +96,9 @@ namespace loaforcsSoundAPI.Behaviours {
                 }
             }
             
+            if (replacedWith == null) return;
+
+            DisableReplacing = replacedWith.group.UpdateEveryFrame || replacedWith.group.IgnoreLooping;
             if (!replacedWith.group.UpdateEveryFrame) return;
 
             float currentTime = source.time;
