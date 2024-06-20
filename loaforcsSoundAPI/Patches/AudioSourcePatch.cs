@@ -23,6 +23,8 @@ namespace loaforcsSoundAPI.Patches {
                 __instance.clip = replacement;
             }
 
+            if (AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) helper._isPlaying = true;
+
             return true;
         }
 
@@ -89,7 +91,6 @@ namespace loaforcsSoundAPI.Patches {
             replacement = newClip;
 
             helper.replacedWith = collection;
-            helper._isPlaying = true;
             
             return true;
         }

@@ -17,6 +17,7 @@ namespace loaforcsSoundAPI.Data {
         internal JObject RandomSettings { get; private set; }
 
         internal bool UpdateEveryFrame { get; private set; } = false;
+        internal bool IgnoreLooping { get; private set; } = false;
         
         public SoundReplaceGroup(SoundPack pack, JObject data) {
             this.pack = pack;
@@ -39,6 +40,9 @@ namespace loaforcsSoundAPI.Data {
 
             if(data.ContainsKey("update_every_frame")) {
                 UpdateEveryFrame = (bool)data["update_every_frame"];
+            }
+            if(data.ContainsKey("ignore_looping")) {
+                UpdateEveryFrame = (bool)data["ignore_looping"];
             }
 
             if (data.ContainsKey("randomnesss")) {

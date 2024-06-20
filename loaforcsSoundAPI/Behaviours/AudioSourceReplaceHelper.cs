@@ -64,6 +64,10 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void LateUpdate() {
             if(source == null) return; // this really shouldn't happen!!
+            if (replacedWith == null) return;
+
+            DisableReplacing = replacedWith.group.UpdateEveryFrame || replacedWith.group.IgnoreLooping;
+            
             if (_isPlaying) {
                 if (source.clip == null) {
                     SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} has a null clipp!!!!!");
@@ -82,9 +86,7 @@ namespace loaforcsSoundAPI.Behaviours {
                 }
             }
             
-            if (replacedWith == null) return;
             if (!replacedWith.group.UpdateEveryFrame) return;
-            DisableReplacing = true;
 
             float currentTime = source.time;
 
