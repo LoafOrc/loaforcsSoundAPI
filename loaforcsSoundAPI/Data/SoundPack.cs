@@ -11,6 +11,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace loaforcsSoundAPI.Data {
     public class SoundPack {
@@ -107,25 +109,47 @@ namespace loaforcsSoundAPI.Data {
 
             LoadedSoundPacks.Add(this);
             loadTime.Stop();
-            SoundPlugin.logger.LogInfo($"Loaded {Name}(start-up) in {loadTime.ElapsedMilliseconds}ms.");
+            SoundPlugin.logger.LogInfo($"Loaded {Name}(init) in {loadTime.ElapsedMilliseconds}ms.");
         }
         
-        internal void QueueLoad(JoinableThreadPool threadPool = null) {
+        internal void QueueLoad() {
             if (!Directory.Exists(Path.Combine(PackPath, "replacers"))) return;
             string[] nonStartup = Directory
                 .GetFiles(Path.Combine(PackPath, "replacers"))
                 .Select(Path.GetFileName)
                 .ToArray();
 
+            Stopwatch loadTime = Stopwatch.StartNew();
+            
             foreach(string replacer in nonStartup) {
-                if(threadPool == null)
-                    ParseReplacer(replacer);
-                else {
-                    threadPool.Queue(() => {ParseReplacer(replacer);});
-                }
+                ParseReplacer(replacer);
             }
+            
+            loadTime.Stop();
+            SoundPlugin.logger.LogInfo($"Loaded {Name}(sound-loading) in {loadTime.ElapsedMilliseconds}ms.");
         }
 
+        internal async UniTask AsyncQueueLoad() {
+            await UniTask.SwitchToTaskPool();
+            string[] nonStartup = Directory
+                                  .GetFiles(Path.Combine(PackPath, "replacers"))
+                                  .Select(Path.GetFileName)
+                                  .ToArray();
+
+            Stopwatch loadTime = Stopwatch.StartNew();
+            await UniTask.WhenAll(nonStartup.Select(AsyncParseReplacer));
+            loadTime.Stop();
+            SoundPlugin.logger.LogInfo($"Loaded {Name}(sound-loading) in {loadTime.ElapsedMilliseconds}ms.");
+        }
+
+        async UniTask AsyncParseReplacer(string replacer) {
+            await UniTask.SwitchToTaskPool();
+            
+            // it crashes without this
+            Thread.Sleep(new Random().Next(100, 500)); // this is beyond cooked
+            ParseReplacer(replacer);
+        }
+        
         void ParseReplacer(string replacer) {
             string filePath = Path.Combine(PackPath, "replacers", replacer);
             SoundPlugin.logger.LogDebug($"Parsing `{Path.GetFileName(filePath)}` as a sound replacer");

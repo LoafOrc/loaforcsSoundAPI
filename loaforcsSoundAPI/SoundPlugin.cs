@@ -12,6 +12,8 @@ using loaforcsSoundAPI.Utils;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -25,8 +27,8 @@ namespace loaforcsSoundAPI {
         
         [Obsolete]
         internal new static ManualLogSource Logger => logger;
-        
-        internal JoinableThreadPool nonstartupThreadPool;
+
+        internal List<UniTask> loadingTasks = [];
         
         private void Awake() {
             logger = new LoafLogger(MyPluginInfo.PLUGIN_GUID);
@@ -82,14 +84,13 @@ namespace loaforcsSoundAPI {
 
             logger.LogInfo("Starting up JoinableThreadPool.");
 
-            if (SoundPluginConfig.ENABLE_MULTITHREADING.Value)
-                nonstartupThreadPool = new JoinableThreadPool(SoundPluginConfig.THREADPOOL_MAX_THREADS.Value);
-            
             foreach(SoundPack pack in SoundPacks) {
-                pack.QueueLoad(nonstartupThreadPool);
+                if (SoundPluginConfig.ENABLE_MULTITHREADING.Value)
+                    loadingTasks.Add(pack.AsyncQueueLoad());
+                else
+                    pack.QueueLoad();
             }
-            
-            if(nonstartupThreadPool != null) nonstartupThreadPool.Start();
+            logger.LogLosingIt($"Created {loadingTasks.Count} loading tasks!");
 
             logger.LogInfo("Registering onSceneLoaded");
 
@@ -120,7 +121,21 @@ namespace loaforcsSoundAPI {
             if(!SoundPluginConfig.ENABLE_MULTITHREADING.Value) return; // if multithreading is disabled, sounds have already been loaeded.
             
             logger.LogInfo("Ensuring all sounds are loaded...");
-            nonstartupThreadPool.Join();
+            foreach (UniTask task in loadingTasks) {
+                int i = 0;
+                while (!task.Status.IsCompleted()) {
+                    Thread.Sleep(100);
+                    i++;
+                    logger.LogLosingIt("Still waiting...");
+                    if (i > 100) {
+                        logger.LogWarning("AAAAAAAAAAAAAAAAAAAAAAA ITS BEEN LONGER THAN 10 SECONDS THIS ISN'T GOODD!!");
+                    }
+
+                    if (i % 10 == 0) {
+                        logger.LogInfo("Things are still happening don't worry.");
+                    }
+                }
+            }
             logger.LogInfo("it's all good :3");
         }
     }
