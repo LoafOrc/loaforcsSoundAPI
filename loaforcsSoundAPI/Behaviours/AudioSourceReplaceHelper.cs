@@ -77,6 +77,7 @@ namespace loaforcsSoundAPI.Behaviours {
 
         void LateUpdate() {
             if(source == null) return; // this really shouldn't happen!!
+            if (!source.enabled) return;
             
             if (_isPlaying) {
                 if (source.clip == null) {
