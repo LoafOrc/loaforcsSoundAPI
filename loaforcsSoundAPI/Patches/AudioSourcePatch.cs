@@ -79,7 +79,7 @@ namespace loaforcsSoundAPI.Patches {
         internal static bool TryReplaceAudio(AudioSource __instance, AudioClip clip, out AudioClip replacement) {
             replacement = null;
             if(__instance.gameObject == null) {
-                ("AudioSource has no GameObject!!");
+                if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("AudioSource has no GameObject!!");
                 return false;
             }
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
