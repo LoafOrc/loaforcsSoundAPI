@@ -4,10 +4,12 @@ using loaforcsSoundAPI.API;
 using loaforcsSoundAPI.Behaviours;
 using loaforcsSoundAPI.Data;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cysharp.Text;
 using UnityEngine;
 
 namespace loaforcsSoundAPI.Patches {
@@ -102,18 +104,17 @@ namespace loaforcsSoundAPI.Patches {
             return true;
         }
 
+        static string[] SUFFIXES_TO_REMOVE = ["(Clone)", "(1)", "(2)", "(3)"];
+        
         static string TrimGameObjectName(GameObject gameObject) {
-
-            StringBuilder builder = new StringBuilder(gameObject.name);
-            builder.Replace("(Clone)", "");
-            
-            string name = gameObject.name.Replace("(Clone)", "");
-            for (int i = 0; i < 10; i++) {
-                builder.Replace("(" + i + ")", "");
+            using Utf16ValueStringBuilder builder = ZString.CreateStringBuilder(true);
+            builder.Append(gameObject.name);
+            foreach (string suffix in SUFFIXES_TO_REMOVE) {
+                builder.Replace(suffix.AsSpan(), ReadOnlySpan<char>.Empty);
             }
 
             if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{builder.ToString().Trim()}`");
-            return builder.ToString().Trim();
+            return builder.AsSpan().Trim().ToString();
         }
         
         static string[] ProcessName(AudioSource source, AudioClip clip) {
@@ -128,7 +129,8 @@ namespace loaforcsSoundAPI.Patches {
             collection = null;
             clip = null;
             if(name == null) return false;
-            SoundPlugin.logger.LogExtended($"Getting replacement for: {string.Join(":",name)}");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.EXTENDED)
+                SoundPlugin.logger.LogExtended($"Getting replacement for: {string.Join(":",name)}");
             
             if (!SoundAPI.SoundReplacements.TryGetValue(name[TOKEN_CLIP_NAME], out List<SoundReplacementCollection> possibleCollections)) { return false; }
 

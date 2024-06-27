@@ -20,3 +20,6 @@ and like some other internal changes that don't matter :3
 
 ### v1.1.4
 i forgor :skull:
+
+### v1.1.5
+some shenanigans

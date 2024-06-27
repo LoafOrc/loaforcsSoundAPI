@@ -5,7 +5,7 @@
         <AssemblyName>me.loaforc.soundapi</AssemblyName>
         <Product>loaforcsSoundAPI</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>1.1.4</Version>
+        <Version>1.1.5</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -50,6 +50,7 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="UniTask" Version="2.5.4" />
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" IncludeAssets="compile" PrivateAssets="all" />
+        <PackageReference Include="ZString" Version="2.6.0" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
@@ -58,6 +59,6 @@
 
 	<Target Name="CopyFiles" DependsOnTargets="PostBuildEvent" AfterTargets="PostBuildEvent">
 		<Message Importance="high" Text="Copying to local lethal company install" />
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Lethal Company\BepInEx\plugins" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="D:\Lethal Company\BepInEx\plugins" />
 	</Target>
 </Project>
