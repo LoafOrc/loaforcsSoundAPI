@@ -30,7 +30,7 @@ internal static class UnityObjectPatch {
 
             AudioSourceReplaceHelper ext = @object.AddComponent<AudioSourceReplaceHelper>();
             ext.source = source;
-            SoundPlugin.logger.LogLosingIt("Handled AudioSource created via prefab instantiate");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("Handled AudioSource created via prefab instantiate");
         }
 
         foreach (Transform transform in @object.transform) {

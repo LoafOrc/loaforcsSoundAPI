@@ -1,4 +1,5 @@
-﻿using BepInEx.Logging;
+﻿using System;
+using BepInEx.Logging;
 
 namespace loaforcsSoundAPI.Utils;
 

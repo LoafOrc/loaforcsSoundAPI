@@ -22,7 +22,7 @@ namespace loaforcsSoundAPI.Behaviours {
         public bool Loop {
             get => _loop;
             set {
-                SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper looping is now at: {value}");
+                if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper looping is now at: {value}");
                 _loop = value;
             }
         }
@@ -36,26 +36,26 @@ namespace loaforcsSoundAPI.Behaviours {
             }
             
             string clipName = (source.clip == null ? "null" : source.clip.name);
-            SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper.Start(), gameObject: {gameObject.name}, audioClip.name: " + clipName);
+                if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"AudioSourceReplaceHelper.Start(), gameObject: {gameObject.name}, audioClip.name: " + clipName);
  
             if(source.playOnAwake) {
                 if (source.enabled) {
                     if (source.clip != null) {
                         source.Play();
-                        SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} calling source.Play() because its playOnAwake and enabled.");
+                        if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} calling source.Play() because its playOnAwake and enabled.");
                         _isPlaying = true;
                     }
 
-                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} play on awake + enabled + null audio clip. WHYYYYYYY");
+                    if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} play on awake + enabled + null audio clip. WHYYYYYYY");
                 }
                 else {
-                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} not calling Play() because its playOnAwake but not enabled.");
+                    if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName} not calling Play() because its playOnAwake but not enabled.");
                 }
             }
 
             Loop = source.loop;
             source.loop = false;
-            SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName}, Looping? {Loop}");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{clipName}, Looping? {Loop}");
 
             // this needs to happen after we assign source.loop otherwise things will get cooked
             helpers[source] = this;
@@ -81,7 +81,7 @@ namespace loaforcsSoundAPI.Behaviours {
             
             if (_isPlaying) {
                 if (source.clip == null) {
-                    SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} has a null clipp!!!!!");
+                    if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} has a null clipp!!!!!");
                     _isPlaying = false;
                     return;
                 }
@@ -89,7 +89,7 @@ namespace loaforcsSoundAPI.Behaviours {
                 if (!source.isPlaying) {
                     if (Loop) {
                         source.Play();
-                        SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} succesfully looped!");
+                        if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"{gameObject.name}:{(source.clip == null ? "null" : source.clip.name)} succesfully looped!");
                     } else {
                         _isPlaying = false;
                         // this literally handles all other audio clips finishing normally lmao

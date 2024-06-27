@@ -18,6 +18,6 @@ internal class GameObjectPatch {
 
         AudioSourceReplaceHelper ext = __instance.AddComponent<AudioSourceReplaceHelper>();
         ext.source = source;
-        SoundPlugin.logger.LogLosingIt("Handled AudioSource created via .AddComponent()");
+        if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("Handled AudioSource created via .AddComponent()");
     }
 }

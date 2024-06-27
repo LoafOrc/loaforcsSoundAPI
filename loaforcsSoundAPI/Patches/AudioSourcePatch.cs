@@ -49,7 +49,7 @@ namespace loaforcsSoundAPI.Patches {
             if (AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
                 if (helper._isPlaying) {
                     helper._isPlaying = false;
-                    SoundPlugin.logger.LogLosingIt(".Stop() updated ._isPlaying to false");
+                    if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt(".Stop() updated ._isPlaying to false");
                 }
             }
         }
@@ -57,7 +57,7 @@ namespace loaforcsSoundAPI.Patches {
         [HarmonyPrefix, HarmonyPatch(nameof(AudioSource.loop), MethodType.Setter)]
         static bool SetAudioSourceLooping(AudioSource __instance, bool value) {
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
-                SoundPlugin.logger.LogLosingIt($"updating looping for {__instance.gameObject}, value: {value}");
+                if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"updating looping for {__instance.gameObject}, value: {value}");
                 //SoundPlugin.logger.LogTraceback();
                 helper.Loop = value;
                 
@@ -71,7 +71,7 @@ namespace loaforcsSoundAPI.Patches {
         [HarmonyPostfix, HarmonyPatch(nameof(AudioSource.loop), MethodType.Getter)]
         static void GetAudioSourceLooping(AudioSource __instance, ref bool __result) {
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
-                SoundPlugin.logger.LogLosingIt($"swapping out result of AudioSource.loop :3");
+                if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"swapping out result of AudioSource.loop :3");
                 __result = helper.Loop;
             }
         }
@@ -79,7 +79,7 @@ namespace loaforcsSoundAPI.Patches {
         internal static bool TryReplaceAudio(AudioSource __instance, AudioClip clip, out AudioClip replacement) {
             replacement = null;
             if(__instance.gameObject == null) {
-                SoundPlugin.logger.LogWarning("AudioSource has no GameObject!!");
+                ("AudioSource has no GameObject!!");
                 return false;
             }
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
@@ -112,7 +112,7 @@ namespace loaforcsSoundAPI.Patches {
                 builder.Replace("(" + i + ")", "");
             }
 
-            SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{builder.ToString().Trim()}`");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{builder.ToString().Trim()}`");
             return builder.ToString().Trim();
         }
         

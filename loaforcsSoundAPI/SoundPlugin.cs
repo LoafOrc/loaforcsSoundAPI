@@ -14,6 +14,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using loaforcsSoundAPI.Patches;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -36,7 +37,7 @@ namespace loaforcsSoundAPI {
             Instance = this;
 
             logger.LogInfo("Patching...");
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID);
+            Harmony harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID);
 
             logger.LogInfo("Setting up config...");
             new SoundPluginConfig(Config);

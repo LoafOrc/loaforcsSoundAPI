@@ -26,17 +26,17 @@ namespace loaforcsSoundAPI.Data {
                 
                 if ((string)data["condition"]["type"] == "config" && SoundPluginConfig.SKIP_LOADING_UNUSED_SOUNDS.Value) {
                     if (!TestCondition()) {
-                        SoundPlugin.logger.LogLosingIt("Skipping loading SoundReplaceGroup because the config is disabled..");
+                        if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("Skipping loading SoundReplaceGroup because the config is disabled..");
                         return;
                     }
                 }
             }
             
-            SoundPlugin.logger.LogLosingIt("Loading audio");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("Loading audio");
             foreach(JObject replacer in data["replacements"]) {
                 new SoundReplacementCollection(this, replacer);
             }
-            SoundPlugin.logger.LogLosingIt("Done loading audio");
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt("Done loading audio");
 
             if(data.ContainsKey("update_every_frame")) {
                 UpdateEveryFrame = (bool)data["update_every_frame"];
