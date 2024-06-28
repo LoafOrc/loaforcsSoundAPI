@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Cysharp.Text;
 using UnityEngine;
 
 namespace loaforcsSoundAPI.Patches {
@@ -87,7 +86,18 @@ namespace loaforcsSoundAPI.Patches {
             if(AudioSourceReplaceHelper.helpers.TryGetValue(__instance, out AudioSourceReplaceHelper helper)) {
                 if(helper.DisableReplacing) return false;
             }
-            if(!TryGetReplacementClip(ProcessName(__instance, clip), out SoundReplacementCollection collection, out AudioClip newClip)) return false;
+
+            string[] name = ArrayPool<string>.Shared.Rent(3);
+
+            if (!TryProcessName(ref name, __instance, clip)) {
+                ArrayPool<string>.Shared.Return(name);
+                return false;
+            }
+            if(!TryGetReplacementClip(name, out SoundReplacementCollection collection, out AudioClip newClip)) {
+                ArrayPool<string>.Shared.Return(name);
+                return false;
+            }
+            ArrayPool<string>.Shared.Return(name);
 
             if (helper == null) {
                 if (__instance.playOnAwake)
@@ -105,31 +115,50 @@ namespace loaforcsSoundAPI.Patches {
         }
 
         static string[] SUFFIXES_TO_REMOVE = ["(Clone)", "(1)", "(2)", "(3)"];
+        internal static Dictionary<int, string> TrimmedGameobjectNames = [];
+        static StringBuilder builder = new();
         
         static string TrimGameObjectName(GameObject gameObject) {
-            using Utf16ValueStringBuilder builder = ZString.CreateStringBuilder(true);
+            if (TrimmedGameobjectNames.ContainsKey(gameObject.GetHashCode())) return TrimmedGameobjectNames[gameObject.GetHashCode()];
+            
+            builder.Clear();
             builder.Append(gameObject.name);
             foreach (string suffix in SUFFIXES_TO_REMOVE) {
-                builder.Replace(suffix.AsSpan(), ReadOnlySpan<char>.Empty);
+                builder.Replace(suffix, string.Empty);
             }
 
-            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{builder.ToString().Trim()}`");
-            return builder.AsSpan().Trim().ToString();
+            int i = builder.Length;
+            for (; i > 0; i--) {
+                if(builder[i - 1] != ' ') break;
+            }
+
+            builder.Remove(i, builder.Length - i);
+
+            string trimmed = builder.ToString();
+            TrimmedGameobjectNames[gameObject.GetHashCode()] = trimmed;
+            
+            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT) SoundPlugin.logger.LogLosingIt($"trimmed `{gameObject.name}` to `{trimmed}`");
+            return trimmed;
         }
         
-        static string[] ProcessName(AudioSource source, AudioClip clip) {
-            if (clip == null) return null;
+        static bool TryProcessName(ref string[] name, AudioSource source, AudioClip clip) {
+            if (clip == null) return false;
             if(source.transform.parent == null) {
-                return ["*", TrimGameObjectName(source.gameObject), clip.name];
+                name[TOKEN_PARENT_NAME] = "*";
+            } else {
+                name[TOKEN_PARENT_NAME] = TrimGameObjectName(source.transform.parent.gameObject);
             }
-            return [TrimGameObjectName(source.transform.parent.gameObject), TrimGameObjectName(source.gameObject), clip.name];
+
+            name[TOKEN_OBJECT_NAME] = TrimGameObjectName(source.gameObject);
+            name[TOKEN_CLIP_NAME] = clip.name;
+            return true;
         }
 
         static bool TryGetReplacementClip(string[] name, out SoundReplacementCollection collection, out AudioClip clip) {
             collection = null;
             clip = null;
             if(name == null) return false;
-            if(SoundPluginConfig.LOGGING_LEVEL.Value == SoundPluginConfig.LoggingLevel.EXTENDED)
+            if(SoundPluginConfig.LOGGING_LEVEL.Value is SoundPluginConfig.LoggingLevel.EXTENDED or SoundPluginConfig.LoggingLevel.IM_GOING_TO_LOSE_IT)
                 SoundPlugin.logger.LogExtended($"Getting replacement for: {string.Join(":",name)}");
             
             if (!SoundAPI.SoundReplacements.TryGetValue(name[TOKEN_CLIP_NAME], out List<SoundReplacementCollection> possibleCollections)) { return false; }

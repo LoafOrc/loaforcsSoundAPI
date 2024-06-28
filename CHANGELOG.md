@@ -23,3 +23,6 @@ i forgor :skull:
 
 ### v1.1.5
 some shenanigans
+
+### v1.1.6
+undo shenanigans with zstring, do my own shenanigans

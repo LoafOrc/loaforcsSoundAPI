@@ -99,6 +99,8 @@ namespace loaforcsSoundAPI {
                 logger.LogLosingIt("NEW SCENE LOADED! Scanning for inital playOnAwake sounds...");
                 logger.LogLosingIt($"scene.name: {scene.name}");
                 
+                AudioSourcePatch.TrimmedGameobjectNames.Clear();
+                
                 foreach(AudioSource source in FindObjectsOfType<AudioSource>(true)) {
                     if(source.gameObject.scene != scene) continue; // already processed
 
