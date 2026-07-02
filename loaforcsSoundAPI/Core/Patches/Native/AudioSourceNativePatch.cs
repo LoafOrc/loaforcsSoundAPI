@@ -11,7 +11,7 @@ namespace loaforcsSoundAPI.Core.Patches.Native;
 // some cleanup maybe?
 static class AudioSourceNativePatch {
 	[UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-	delegate void PlayDelegate(IntPtr self, IntPtr delay);
+	delegate void PlayDelegate(IntPtr self, double delay);
 
 	[UnmanagedFunctionPointer(CallingConvention.ThisCall)]
 	delegate void RemoveFromManagerDelegate(IntPtr self);
@@ -43,7 +43,7 @@ static class AudioSourceNativePatch {
 		_origRemoveFromManager(self);
 	}
 
-	static unsafe void Play(IntPtr self, IntPtr delay) {
+	static unsafe void Play(IntPtr self, double delay) {
 		AudioSource source = NativeBackend.GetScriptingWrapper<AudioSource>(self);
 		Debuggers.NativeBackend?.Log($"native detour source = {source} (gameobject: {source.gameObject.name})");
 
