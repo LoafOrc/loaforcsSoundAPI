@@ -66,3 +66,7 @@
 
 ## 2.0.11
 - Fixes an issue where SoundAPI could only replace the same audio clip on the same audio source once.
+
+## 2.0.12
+- Fixes an issue where `.PlayScheduled` or `.Play(delay)` didn't work correctly
+  - Fixes [the issue with TME emote looping audio](https://github.com/loaforcsSoundAPI/loaforcsSoundAPI/issues/37)
