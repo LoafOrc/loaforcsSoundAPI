@@ -10,7 +10,7 @@ public readonly struct AudioSourcePlayEvent {
 		Source = source;
 		Clip = clip;
 		Data = AudioSourceAdditionalData.GetOrCreate(source);
-		Context = Data.CurrentContext ?? DefaultConditionContext.DEFAULT; // todo: support context overrides maybe?
+		Context = Data.CurrentContext ?? new DefaultConditionContext(source); // todo: support context overrides maybe?
 	}
 
 	public bool IsOneShot { get; }

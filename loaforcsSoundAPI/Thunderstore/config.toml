@@ -8,7 +8,7 @@ description = "A general use library to replace sounds in Unity games."
 websiteUrl = "https://soundapi.loaforc.me"
 containsNsfwContent = false
 [package.dependencies]
-BepInEx-BepInExPack = "5.4.2100"
+BepInEx-BepInExPack = "5.4.2305"
 
 [build]
 icon = "./icon.png"
@@ -18,6 +18,10 @@ outdir = "../../Packages"
 [[build.copy]]
 source = "../bin/Release/netstandard2.1/me.loaforc.soundapi.dll"
 target = "BepInEx/plugins/loaforcsSoundAPI/"
+
+[[build.copy]]
+source = "../../loaforcsSoundAPI.Patcher/bin/Release/netstandard2.1/me.loaforc.soundapi.patcher.dll"
+target = "BepInEx/patchers/"
 
 [[build.copy]]
 source = "../../LICENSE"

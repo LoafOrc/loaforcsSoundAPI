@@ -7,5 +7,7 @@ namespace loaforcsSoundAPI;
 /// </summary>
 [Flags]
 public enum AudioSourceCopyFlags {
-	DontCopyPlayOnAwake = 1 << 0
+	DontCopyPlayOnAwake = 1 << 0,
+	DontCopySpatialize = 1 << 1,
+	DontCopyLoop = 1 << 2
 }

@@ -30,9 +30,13 @@ public class SoundReplacementGroup : Conditional, IValidatable {
 
 	[field: NonSerialized]
 	public SoundReplacementCollection Parent { get; internal set; }
+	public int Priority { get; private set; }
 
-	public List<string> Matches { get; private set; }
-	public List<SoundInstance> Sounds { get; private set; } = [ ];
+	public List<string> Matches { get; private set; } = [];
+	public List<SoundInstance> Sounds { get; private set; } = [];
+
+	public bool UpdateEveryFrame { get; internal set; }
+	public float? Volume { get; private set; }
 
 	public override void OnRegistered() {
 		base.OnRegistered();
@@ -47,10 +51,16 @@ public class SoundReplacementGroup : Conditional, IValidatable {
 		Matches.AddRange(corrected);
 	}
 
-	internal void QueueSounds(IAudioClipLoader audioClipLoader, SoundPackLoadPipeline.SkippedResults results = null) {
+	internal void QueueSounds(IAudioClipLoader audioClipLoader, SoundPackLoadPipeline.SkippedResults results = null, HashSet<SoundInstance> sharedSounds = null, Dictionary<string, SoundInstance> uniqueSounds = null) {
 		foreach(SoundInstance sound in Sounds) {
 			if(sound.ShouldSkip()) {
 				if(results != null) results.Sounds++;
+				continue;
+			}
+
+			if(uniqueSounds?.TryAdd(sound.FullPath, sound) == false) {
+				sharedSounds?.Add(sound);
+				if(results != null) results.Shared++;
 				continue;
 			}
 
@@ -100,6 +110,10 @@ public class SoundReplacementGroup : Conditional, IValidatable {
 			results.AddRange(sound.Validate());
 		}
 
+		if(Volume.HasValue) {
+			Volume = Math.Clamp(Volume.Value, 0.0f, 1.0f);
+		}
+
 		return results;
 	}
 
@@ -109,5 +123,11 @@ public class SoundReplacementGroup : Conditional, IValidatable {
 			if(Parent.Pack != null) throw new InvalidOperationException("Pack has already been set.");
 			Parent.Pack = value;
 		}
+	}
+
+	public override string ToString() {
+		string matches = string.Join(", ", Matches);
+		string sounds = string.Join(", ", Sounds);
+		return $"Parent: {Parent}\nMatches: {matches}\nSounds: {sounds}";
 	}
 }

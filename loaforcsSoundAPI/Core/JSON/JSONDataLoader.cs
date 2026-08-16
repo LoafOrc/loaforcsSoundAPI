@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Reflection;
 using BepInEx;
 using loaforcsSoundAPI.Core.Data;
 using loaforcsSoundAPI.SoundPacks;
+using loaforcsSoundAPI.SoundPacks.Data;
 using loaforcsSoundAPI.SoundPacks.Data.Conditions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,7 +24,9 @@ public static class JSONDataLoader {
 		ContractResolver = new IncludePrivatePropertiesContractResolver(),
 		Converters = [
 			new MatchesJSONConverter(),
-			new ConditionConverter()
+			new ConditionConverter(),
+			new ContentReferenceConverter(),
+			new RangeOperatorConverter()
 		]
 	};
 
@@ -86,11 +90,11 @@ public static class JSONDataLoader {
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
 			JToken token = JToken.Load(reader);
-			if(token.Type == JTokenType.Array) {
-				return token.ToObject<List<string>>();
+			if(token is not JArray array) {
+				array = [token];
 			}
 
-			return new List<string> { token.ToString() };
+			return array.ToObject<List<string>>();
 		}
 
 		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) {
@@ -140,11 +144,126 @@ public static class JSONDataLoader {
 				return condition;
 			}
 
-			IJsonLineInfo? lineInfo = reader as IJsonLineInfo;
-			throw new JsonReaderException($"{token} is not valid for a condition", reader.Path, lineInfo?.LineNumber ?? 0, lineInfo?.LinePosition ?? 0, null);
+			IJsonLineInfo lineInfo = reader as IJsonLineInfo;
+			throw new JsonReaderException($"'{token}' is not valid for a condition", reader.Path, lineInfo?.LineNumber ?? 0, lineInfo?.LinePosition ?? 0, null);
 		}
 
 		public override void WriteJson(JsonWriter writer, Condition value, JsonSerializer serializer) {
+			throw new NotImplementedException("no.");
+		}
+	}
+
+	class ContentReferenceConverter : JsonConverter {
+		static Dictionary<Type, Dictionary<string, ContentReference>> _referenceCache = [];
+
+		public ContentReferenceConverter() {
+			SoundPackLoadPipeline.OnFinishedPipeline += static () => _referenceCache = null;
+		}
+
+		public override bool CanConvert(Type objectType) {
+			TypeInfo typeInfo = objectType.GetTypeInfo();
+
+			if(typeof(ContentReference).IsAssignableFrom(typeInfo)) return true; // Check for ContentReference type.
+			if(typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(List<>)) { // Check for a List of ContentReference type.
+				TypeInfo listTypeInfo = typeInfo.GetGenericArguments()[0].GetTypeInfo();
+				if(typeof(ContentReference).IsAssignableFrom(listTypeInfo)) return true;
+			}
+
+			return false;
+		}
+
+		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
+			JToken root = JToken.Load(reader);
+
+			TypeInfo typeInfo = objectType.GetTypeInfo();
+			if(typeof(ContentReference).IsAssignableFrom(typeInfo)) { // Check for ContentReference type.
+				return GetOrCreateReference($"{root}", typeInfo);
+			}
+
+			if(root is not JArray array) {
+				array = [root];
+			}
+
+			TypeInfo listTypeInfo = typeInfo.GetGenericArguments()[0].GetTypeInfo();
+			if(typeof(ContentReference).IsAssignableFrom(listTypeInfo)) { // Check for a List of ContentReference type.
+				IList genericList = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(listTypeInfo), array.Count);
+
+				foreach(JToken token in array) {
+					genericList.Add(GetOrCreateReference($"{token}", listTypeInfo));
+				}
+
+				return genericList;
+			}
+
+			IJsonLineInfo lineInfo = reader as IJsonLineInfo;
+			throw new JsonReaderException($"'{root}' is not valid for a condition", reader.Path, lineInfo?.LineNumber ?? 0, lineInfo?.LinePosition ?? 0, null);
+		}
+
+		static ContentReference GetOrCreateReference(string input, Type referenceType) {
+			if(!_referenceCache.TryGetValue(referenceType, out Dictionary<string, ContentReference> tokenDictionary)) {
+				tokenDictionary = [];
+				_referenceCache.Add(referenceType, tokenDictionary);
+			}
+
+			if(!tokenDictionary.TryGetValue(input, out ContentReference reference)) {
+				reference = (ContentReference) Activator.CreateInstance(referenceType, input);
+				tokenDictionary.Add(input, reference);
+			}
+			reference.Uses++;
+
+			return reference;
+		}
+
+		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) {
+			throw new NotImplementedException("no.");
+		}
+	}
+
+	class RangeOperatorConverter : JsonConverter {
+		static Dictionary<Type, Dictionary<string, RangeOperator>> _operatorCache = [];
+
+		public RangeOperatorConverter() {
+			SoundPackLoadPipeline.OnFinishedPipeline += static () => _operatorCache = null;
+		}
+
+		public override bool CanConvert(Type objectType) {
+			return objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(RangeOperator<>);
+		}
+
+		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
+			JToken root = JToken.Load(reader);
+
+			TypeInfo operatorType = objectType.GetTypeInfo().GetGenericArguments()[0].GetTypeInfo();
+			RangeOperator rangeOperator = GetOrCreateOperator($"{root}", operatorType, existingValue);
+			if(rangeOperator != null) {
+				rangeOperator.Uses++;
+
+				return rangeOperator;
+			}
+
+			IJsonLineInfo lineInfo = reader as IJsonLineInfo;
+			throw new JsonReaderException($"'{root}' is not valid for a range operator", reader.Path, lineInfo?.LineNumber ?? 0, lineInfo?.LinePosition ?? 0, null);
+		}
+
+		static RangeOperator GetOrCreateOperator(string input, Type operatorType, object operatorLimits) {
+			if(!_operatorCache.TryGetValue(operatorType, out Dictionary<string, RangeOperator> tokenDictionary)) {
+				tokenDictionary = [];
+				_operatorCache.Add(operatorType, tokenDictionary);
+			}
+
+			if(!tokenDictionary.TryGetValue(input, out RangeOperator rangeOperator)) {
+				rangeOperator = (RangeOperator) Activator.CreateInstance(typeof(RangeOperator<>).MakeGenericType(operatorType), [input, operatorLimits]);
+
+				List<IValidatable.ValidationResult> validationResults = rangeOperator.Validate();
+				bool success = IValidatable.LogAndCheckValidationResult($"range operator '{input}'", validationResults, loaforcsSoundAPI.Logger);
+
+				tokenDictionary[input] = success ? rangeOperator : null;
+			}
+
+			return rangeOperator;
+		}
+
+		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) {
 			throw new NotImplementedException("no.");
 		}
 	}

@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup>
+        <!-- Change to whatever version you're currently on. -->
+        <Version>2.0.10</Version>
+    </PropertyGroup>
+</Project>

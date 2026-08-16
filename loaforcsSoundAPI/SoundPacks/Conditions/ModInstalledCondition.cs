@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using loaforcsSoundAPI.Core.Data;
-using loaforcsSoundAPI.SoundPacks.Data;
 using loaforcsSoundAPI.SoundPacks.Data.Conditions;
 
 namespace loaforcsSoundAPI.SoundPacks.Conditions;
@@ -21,6 +19,10 @@ class ModInstalledCondition : Condition {
 	/// <value><see cref="string"/></value>
 	/// <example>me.loaforc.facilitymeltdown</example>
 	public string Value { get; private set; }
+
+	public override bool CanBeImpliedConstant() {
+		return true;
+	}
 
 	public override bool Evaluate(IContext context) {
 		return BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(Value);

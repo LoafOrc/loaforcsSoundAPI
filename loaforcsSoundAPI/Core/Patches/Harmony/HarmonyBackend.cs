@@ -40,10 +40,15 @@ static class HarmonyBackend {
 	public static bool Play(AudioSource __instance) {
 		Debuggers.SoundReplacementHandler?.Log("HarmonyX Backend: AudioSource.Play patch");
 		AudioSourceAdditionalData data = AudioSourceAdditionalData.GetOrCreate(__instance);
+		
+		AudioSourcePlayEvent @event = new AudioSourcePlayEvent(__instance, data.RealClip, isOneShot: false);
 
-		if(SoundReplacementHandler.TryReplaceAudio(__instance, data.OriginalClip, out AudioClip replacement)) {
-			if(replacement == null) return false;
-			data.RealClip = replacement;
+		if(SoundReplacementHandler.TryReplaceAudio(in @event, out ReplacementResult? result)) {
+			data.RealClip = result.Value.ReplacedClip;
+			if(data.ReplacedWith?.Volume.HasValue == true) {
+				__instance.volume = data.ReplacedWith.Volume.Value;
+				Debuggers.AudioSourceAdditionalData?.Log($"Changed {__instance} (gameobject: {__instance.gameObject.name}) volume to: {__instance.volume}");
+			}
 		}
 
 		return true;

@@ -2,27 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using loaforcsSoundAPI.Core;
 using loaforcsSoundAPI.Core.Data;
 using loaforcsSoundAPI.Core.JSON;
 using loaforcsSoundAPI.Core.Util;
-using loaforcsSoundAPI.SoundPacks.AudioClipLoading;
 
 namespace loaforcsSoundAPI.SoundPacks.Data;
 
-public class Registry<T> : IEnumerable<T> where T : class, IFilePathAware {
-	List<T> _items = [ ];
+public class Registry<T>(SoundPack pack, string relativePath) : IEnumerable<T> where T : class, IFilePathAware {
+	readonly List<T> _items = [];
 
-	public Registry(SoundPack pack, string relativePath) {
-		Pack = pack;
-		RelativePath = relativePath;
-		AbsolutePath = Path.Combine(pack.PackFolder, relativePath);
-	}
-
-	public SoundPack Pack { get; }
-	public string RelativePath { get; }
-	public string AbsolutePath { get; }
+	public SoundPack Pack { get; } = pack;
+	public string RelativePath { get; } = relativePath;
+	public string AbsolutePath { get; } = Path.Combine(pack.PackFolder, relativePath);
 
 	public IEnumerator<T> GetEnumerator() {
 		return _items.GetEnumerator();
@@ -32,31 +24,31 @@ public class Registry<T> : IEnumerable<T> where T : class, IFilePathAware {
 		return GetEnumerator();
 	}
 
-	T TryLoadFile(string filePath) {
-		T item = JSONDataLoader.LoadFromFile<T>(filePath);
-		if(item == null) return default; // json error
+    T TryLoadFile(string filePath) {
+        T item = JSONDataLoader.LoadFromFile<T>(filePath);
+        if(item == null) return default; // json error
 
-		if(item is IPackData pd) {
-			pd.Pack = Pack;
-		}
+        if(item is IPackData pd) {
+            pd.Pack = Pack;
+        }
 
-		if(item is IValidatable validatable) {
-			if(!IValidatable.LogAndCheckValidationResult(
-				   $"loading '{LogFormats.FormatFilePath(filePath)}",
-				   validatable.Validate(),
-				   Pack.Logger
-			   )) {
-				return default;
-			}
-		}
+        if(item is IValidatable validatable) {
+            if(!IValidatable.LogAndCheckValidationResult(
+                   $"loading '{LogFormats.FormatFilePath(filePath)}",
+                   validatable.Validate(),
+                   Pack.Logger
+               )) {
+                return default;
+            }
+        }
 
-		if(item is IRegistrationCallback callback) {
-			callback.OnRegistered();
-		}
+        if(item is IRegistrationCallback callback) {
+            callback.OnRegistered();
+        }
 
-		_items.Add(item);
-		return item;
-	}
+        _items.Add(item);
+        return item;
+    }
 
 	internal void Load() {
 		if(!Directory.Exists(AbsolutePath)) return; // nothing to load!

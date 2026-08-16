@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
-using loaforcsSoundAPI.Core.Data;
+using loaforcsSoundAPI.SoundPacks.Data;
 using loaforcsSoundAPI.SoundPacks.Data.Conditions;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace loaforcsSoundAPI.SoundPacks.Conditions;
 
@@ -16,12 +18,10 @@ namespace loaforcsSoundAPI.SoundPacks.Conditions;
 /// </soundapi>
 [SoundAPICondition("counter")]
 public class CounterCondition : Condition {
-	/// <summary>
-	/// Range of values to check against
-	/// </summary>
-	/// <value>ValueRange</value>
-	/// <example>1</example>
-	public string Value { get; private set; }
+	static readonly List<AudioSource> _keys = [];
+	static readonly Dictionary<AudioSource, int> _localCounters = [];
+
+	public RangeOperator<int> Value { get; private set; } = new(int.MinValue, int.MaxValue);
 
 	/// <summary>
 	/// Resets after reaching this number. Inclusive.
@@ -30,26 +30,46 @@ public class CounterCondition : Condition {
 	/// <example>5</example>
 	public int? ResetsAt { get; private set; }
 
+	public bool? IsLocal { get; private set; }
+
 	int _count;
 
-	public override bool Evaluate(IContext context) {
-		LogDebug("counter", $"counting: {_count} -> {_count + 1}");
-		_count++;
-		bool result = EvaluateRangeOperator(_count, Value);
-		LogDebug("counter", $"is {_count} in range ({Value})? {result}");
-		if(_count >= ResetsAt) {
-			_count = 0;
-			LogDebug("counter", $"reset count to 0.");
-		}
+	/// <inheritdoc/>
+	public override void OnRegistered() => SceneManager.sceneUnloaded += ClearDestroyed;
 
-		return result;
+	static void ClearDestroyed(Scene scene) {
+		int destroyedSources = 0;
+		_keys.AddRange(_localCounters.Keys);
+		foreach(AudioSource key in _keys) {
+			if(key == null && _localCounters.Remove(key)) {
+				destroyedSources++;
+			}
+		}
+		if(destroyedSources > 0) {
+			LogDebug("counter", $"Removed {destroyedSources} destroyed AudioSources.");
+		}
+		_keys.Clear();
 	}
 
-	public override List<IValidatable.ValidationResult> Validate() {
-		if(!ValidateRangeOperator(Value, out IValidatable.ValidationResult result)) {
-			return [ result ];
+	public override bool Evaluate(IContext context) {
+		if(IsLocal.GetValueOrDefault() && context.Source != null) {
+			_ = _localCounters.TryGetValue(context.Source, out int count);
+			bool result = IncreaseCounter(ref count);
+			_localCounters[context.Source] = count;
+			return result;
 		}
+		return IncreaseCounter(ref _count);
+	}
 
-		return [ ];
+	bool IncreaseCounter(ref int count) {
+		LogDebug("counter", $"counting: {count} -> {count + 1}, local: {IsLocal.GetValueOrDefault()}");
+		count++;
+		bool result = Value.EvaluateRange(count);
+		LogDebug("counter", $"is {count} in range ({Value})? {result}");
+		if(ResetsAt.HasValue && count >= ResetsAt.Value) {
+			count = 0;
+			LogDebug("counter", $"reset count to 0.");
+		}
+		return result;
 	}
 }

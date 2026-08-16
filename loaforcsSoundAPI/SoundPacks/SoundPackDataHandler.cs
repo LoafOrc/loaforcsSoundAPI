@@ -8,11 +8,11 @@ using UnityEngine;
 namespace loaforcsSoundAPI.SoundPacks;
 
 static class SoundPackDataHandler {
-	static List<SoundPack> _loadedPacks = [ ];
+	static List<SoundPack> _loadedPacks = [];
 
 	internal static IReadOnlyList<SoundPack> LoadedPacks => _loadedPacks.AsReadOnly();
 
-	internal static Dictionary<string, List<SoundReplacementGroup>> SoundReplacements = [ ];
+	internal static Dictionary<string, List<SoundReplacementGroup>> SoundReplacements = [];
 
 
 	// this seems kinda in-efficent but i dont really care
@@ -37,22 +37,39 @@ static class SoundPackDataHandler {
 
 	internal static void AddReplacement(SoundReplacementGroup group) {
 		foreach(string match in group.Matches) {
-			string clipName = match.Split(":").Last();
+			string[] splitMatch = match.Split(':', StringSplitOptions.RemoveEmptyEntries);
+			if(splitMatch.Length == 0) continue;
+			string clipName = splitMatch.Last();
 			if(!SoundReplacements.TryGetValue(clipName, out List<SoundReplacementGroup> existingGroups)) {
-				existingGroups = [ ];
+				existingGroups = [];
 			}
 
 			if(existingGroups.Contains(group)) continue;
-			existingGroups.Add(group);
+			if(existingGroups.Count == 0 || existingGroups.Last().Priority >= group.Priority) {
+				existingGroups.Add(group);
+			} else {
+				for(int i = existingGroups.Count - 1; i >= 0; i--) {
+					if(existingGroups[i].Priority <= group.Priority) {
+						existingGroups.Insert(i, group);
+						break;
+					}
+				}
+			}
 			SoundReplacements[clipName] = existingGroups;
 		}
 	}
 
 	internal static void RemoveReplacement(SoundReplacementGroup group) {
 		foreach(string match in group.Matches) {
-			string clipName = match.Split(":").Last();
+			string[] splitMatch = match.Split(':', StringSplitOptions.RemoveEmptyEntries);
+			if(splitMatch.Length == 0) continue;
+			string clipName = splitMatch.Last();
 
 			SoundReplacements[clipName].Remove(group);
 		}
+	}
+
+	internal static List<SoundReplacementGroup> GetReplacements(string match) {
+		return SoundReplacements.TryGetValue(match, out List<SoundReplacementGroup> groups) ? groups : [];
 	}
 }

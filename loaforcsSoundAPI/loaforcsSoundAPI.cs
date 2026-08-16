@@ -7,6 +7,7 @@ using loaforcsSoundAPI.Core;
 using loaforcsSoundAPI.Core.Patches;
 using loaforcsSoundAPI.Core.Patches.Harmony;
 using loaforcsSoundAPI.Core.Patches.Native;
+using loaforcsSoundAPI.Patcher;
 using loaforcsSoundAPI.Reporting;
 using loaforcsSoundAPI.SoundPacks;
 using UnityEngine;
@@ -26,6 +27,9 @@ class loaforcsSoundAPI : BaseUnityPlugin {
 		SoundReportHandler.Bind(Config);
 		PatchConfig.Bind(Config);
 		PackLoadingConfig.Bind(Config);
+
+		// Subscribe to Action from preloader.
+		LoaforcsSoundAPIPatcher.Instance.ChainloaderFinish += async () => await SoundPackLoadPipeline.StartPipeline();
 
 		Logger.LogInfo("Running patches");
 		Harmony harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), MyPluginInfo.PLUGIN_GUID);

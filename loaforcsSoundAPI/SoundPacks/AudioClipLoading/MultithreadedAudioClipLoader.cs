@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using loaforcsSoundAPI.Core;
 using loaforcsSoundAPI.SoundPacks.Data;
@@ -14,38 +12,47 @@ namespace loaforcsSoundAPI.SoundPacks.AudioClipLoading;
 
 // TODO: fix me, this is not good logic.
 // im going to be so real i no longer understand whats happening here
+// I think it's better nooooooooow, probably, maybe...
 class MultithreadedAudioClipLoader : IAudioClipLoader {
-	List<LoadSoundOperation> _webRequestOperations = [ ];
-	static volatile int _activeThreads;
+	static volatile int _activeThreads, _clipsGenerated;
 
-	ConcurrentBag<Exception> _threadPoolExceptions = [ ];
-	ConcurrentQueue<LoadSoundOperation> _queuedOperations = new ConcurrentQueue<LoadSoundOperation>();
+	readonly ConcurrentBag<Exception> _threadPoolExceptions = [];
+	readonly ConcurrentQueue<LoadSoundOperation> _queuedOperations = [];
 
+	bool _threadsShouldExit = false, _displayedHalfwayMessage = false;
 
-	bool _threadsShouldExit, _displayedHalfwayMessage = false;
-
-	public int Count => _webRequestOperations.Count;
+	public int Count => _queuedOperations.Count;
+	int totalClips;
 
 	public void LoadAllBlocking() {
 		Stopwatch timer = Stopwatch.StartNew();
 
-		for(int i = 0; i < 16; i++) {
-			new Thread(() => {
-				LoadSoundOperation operation;
-				while(_queuedOperations.Count == 0 && !_threadsShouldExit) {
-					Thread.Yield();
-				}
+		loaforcsSoundAPI.Logger.LogInfo($"(Step 5) All file reads are done, waiting for the audio clips conversions.");
 
+		totalClips = Count;
+		for(int i = 0; i < Environment.ProcessorCount * 2; i++) { // Twice the number of CPU cores, instead of a fixed value.
+			new Thread(threadIndex => {
 				Interlocked.Increment(ref _activeThreads);
 				Debuggers.SoundReplacementLoader?.Log($"active threads at {_activeThreads}");
 
-				while(_queuedOperations.TryDequeue(out operation)) {
-					try {
-						AudioClip clip = DownloadHandlerAudioClip.GetContent(operation.WebRequest);
-						operation.Sound.Clip = clip;
-						operation.WebRequest.Dispose();
-						Debuggers.SoundReplacementLoader?.Log("clip generated");
+				/* while(!_threadsShouldExit) { // Allowing Threads to start working immediately appears marginally faster.
+					Thread.Yield();
+				} */
 
+				while(_queuedOperations.TryDequeue(out LoadSoundOperation operation)) {
+					try {
+						using UnityWebRequest webRequest = operation.WebRequest;
+						while(webRequest.result is UnityWebRequest.Result.InProgress) { // Had it error out once due to requests not being ready yet (for some reason).
+							Thread.Yield();
+						}
+						if(webRequest.result is not UnityWebRequest.Result.Success) return;
+						using DownloadHandlerAudioClip downloadHandler = DownloadHandler.GetCheckedDownloader<DownloadHandlerAudioClip>(webRequest);
+						downloadHandler.compressed = true;
+
+						AudioClip clip = downloadHandler.audioClip;
+						operation.Sound.Clip = clip;
+						Interlocked.Increment(ref _clipsGenerated);
+						Debuggers.SoundReplacementLoader?.Log($"clip #{_clipsGenerated} out of {totalClips} generated: {clip.name} on thread {threadIndex}");
 						operation.IsDone = true;
 					} catch(Exception exception) {
 						_threadPoolExceptions.Add(exception);
@@ -53,26 +60,16 @@ class MultithreadedAudioClipLoader : IAudioClipLoader {
 				}
 
 				Interlocked.Decrement(ref _activeThreads);
-			}).Start();
+			}).Start(i + 1);
 		}
 
-		while(_webRequestOperations.Count > 0) {
-			foreach(LoadSoundOperation operation in _webRequestOperations.ToList().Where(operation => operation.IsReady)) { // .ToList() here is so we can modify the current list without causing an exception
-				_queuedOperations.Enqueue(operation); // give to threads to do work
-				_webRequestOperations.Remove(operation);
-			}
-
-			if(!_displayedHalfwayMessage && _webRequestOperations.Count < Count / 2) {
+		// _threadsShouldExit = true;
+		while(_activeThreads > 0) {
+			if(!_displayedHalfwayMessage && Count < totalClips / 2) {
 				_displayedHalfwayMessage = true;
 				loaforcsSoundAPI.Logger.LogInfo($"(Step 5) Queued half of the needed operations!");
 			}
 
-			Thread.Yield(); // this has to be Thread.Sleep instead of Task.Delay because this needs to be blocking
-		}
-
-		loaforcsSoundAPI.Logger.LogInfo($"(Step 5) All file reads are done, waiting for the audio clips conversions.");
-
-		while(_activeThreads > 0 || _webRequestOperations.Any(operation => !operation.IsDone)) {
 			Thread.Yield();
 		}
 
@@ -86,7 +83,7 @@ class MultithreadedAudioClipLoader : IAudioClipLoader {
 	}
 
 	public void Queue(SoundInstance sound) {
-		_webRequestOperations.Add(StartWebRequestOperation(sound));
+		_queuedOperations.Enqueue(StartWebRequestOperation(sound));
 	}
 
 	LoadSoundOperation StartWebRequestOperation(SoundInstance sound) {

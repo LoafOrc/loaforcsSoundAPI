@@ -64,7 +64,7 @@ public class SoundPack : IValidatable, IDeserializationCallback, IFilePathAware 
 	ManualLogSource _logger;
 
 	[field: NonSerialized]
-	public Registry<SoundReplacementCollection> Replacers { get; private set; }
+	public ReplacementsRegistry Replacers { get; private set; }
 
 	public ManualLogSource Logger {
 		get {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using loaforcsSoundAPI.Core.Patches;
-using loaforcsSoundAPI.SoundPacks;
-using loaforcsSoundAPI.SoundPacks.Data;
+﻿using loaforcsSoundAPI.SoundPacks.Data;
 using loaforcsSoundAPI.SoundPacks.Data.Conditions;
 using UnityEngine;
 
@@ -71,20 +66,14 @@ public class AudioSourceAdditionalData {
 		}
 	}
 
-	internal SoundReplacementGroup ReplacedWith {
+	public SoundReplacementGroup ReplacedWith {
 		get => _replacedWith;
-		set {
+		internal set {
 			_replacedWith = value;
 
 			// todo: kind of icky just modifying the list raw
 			if(RequiresUpdateFunction()) {
-				if(SoundAPIAudioManager.liveAudioSourceData.Contains(this)) {
-					return; // dont add to list twice
-				}
-
 				SoundAPIAudioManager.liveAudioSourceData.Add(this);
-			} else if(SoundAPIAudioManager.liveAudioSourceData.Contains(this)) {
-				SoundAPIAudioManager.liveAudioSourceData.Remove(this);
 			}
 		}
 	}
@@ -99,6 +88,11 @@ public class AudioSourceAdditionalData {
 	/// </summary>
 	public IContext CurrentContext { get; set; }
 
+	/// <summary>
+	/// Volume scale for this Audio Source (mainly for OneShots).
+	/// </summary>
+	public float VolumeScale { get; set; } = 1.0f;
+
 	internal void Update() {
 		if(!RequiresUpdateFunction() || !AudioSourceIsPlaying()) {
 			return;
@@ -106,9 +100,8 @@ public class AudioSourceAdditionalData {
 
 		Debuggers.UpdateEveryFrame?.Log($"success: updating every frame for {Source.name}");
 
-		IContext context = CurrentContext ?? DefaultConditionContext.DEFAULT;
-
-		SoundInstance sound = ReplacedWith.Sounds.FirstOrDefault(x => x.Evaluate(context));
+		CurrentContext ??= new DefaultConditionContext(Source);
+		SoundInstance sound = ReplacedWith.Sounds.Find(it => it.Evaluate(CurrentContext));
 		if(sound == null || !sound.Clip) {
 			return;
 		}
@@ -119,9 +112,25 @@ public class AudioSourceAdditionalData {
 
 		Debuggers.UpdateEveryFrame?.Log("new clip found, swapping!!");
 
+		if(sound.Parent?.Volume.HasValue == true) {
+			Source.volume = sound.Parent.Volume.Value * VolumeScale;
+			if(Debuggers.AudioSourceAdditionalData != null) {
+				string volume = $"{Source.volume}";
+				if(Source.volume != sound.Parent.Volume.Value) {
+					volume += $" ({sound.Parent.Volume.Value} * {VolumeScale})";
+				}
+				Debuggers.AudioSourceAdditionalData?.Log($"Changed {Source} (gameobject: {Source.name}) volume to: {volume})");
+			}
+		}
+
 
 		float currentTime = Source.time;
+		if(currentTime >= sound.Clip.length) {
+			Source.Stop(); // TODO: Condition to remember playback time.
+			return;
+		}
 		Source.clip = sound.Clip;
+
 		Source.Play();
 		Source.time = currentTime;
 
@@ -129,7 +138,7 @@ public class AudioSourceAdditionalData {
 	}
 
 	bool RequiresUpdateFunction() {
-		return ReplacedWith != null && ReplacedWith.Parent.UpdateEveryFrame;
+		return ReplacedWith != null && ReplacedWith.UpdateEveryFrame;
 	}
 
 	bool AudioSourceIsPlaying() {
@@ -142,7 +151,8 @@ public class AudioSourceAdditionalData {
 		}
 
 		sourceData = new AudioSourceAdditionalData(source);
-		sourceData.OriginalClip = sourceData.RealClip;
+		if(!sourceData.OriginalClip) // Only set original clip if missing.
+			sourceData.OriginalClip = sourceData.RealClip;
 		SoundAPIAudioManager.audioSourceData[source] = sourceData;
 
 		Debuggers.AudioSourceAdditionalData?.Log($"created {source.gameObject.name} = {source.m_CachedPtr.ToInt64()}");
@@ -152,5 +162,10 @@ public class AudioSourceAdditionalData {
 
 	internal static bool TryGet(AudioSource source, out AudioSourceAdditionalData data) {
 		return SoundAPIAudioManager.audioSourceData.TryGetValue(source, out data);
+	}
+
+	public override string ToString() {
+		if(Source == null) return base.ToString();
+		return $"'{Source.name}' ('{(OriginalClip ? OriginalClip.name : "null")}' -> '{(RealClip ? RealClip.name : "null")}') | {ReplacedWith}";
 	}
 }

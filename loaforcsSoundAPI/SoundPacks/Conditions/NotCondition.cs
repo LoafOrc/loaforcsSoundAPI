@@ -41,6 +41,6 @@ class NotCondition : Condition {
 			];
 		}
 
-		return [ ];
+		return Condition.Validate();
 	}
 }

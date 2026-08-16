@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
@@ -16,32 +12,26 @@ using loaforcsSoundAPI.Core.Util;
 using loaforcsSoundAPI.Reporting;
 using loaforcsSoundAPI.SoundPacks.AudioClipLoading;
 using loaforcsSoundAPI.SoundPacks.Data;
-using loaforcsSoundAPI.SoundPacks.Data.Conditions;
-using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
-using Random = UnityEngine.Random;
 
 namespace loaforcsSoundAPI.SoundPacks;
 
 static class SoundPackLoadPipeline {
-	static volatile int _activeThreads;
-
 	// todo: maybe remove
 	internal static event Action OnFinishedPipeline = delegate { };
 	internal static Dictionary<string, List<string>> mappings = [ ];
-
-	[Obsolete("Moved to IAudioClipLoader.audioExtensions")]
-	internal static Dictionary<string, AudioType> audioExtensions => IAudioClipLoader.audioExtensions;
 
 	internal class SkippedResults {
 		public int Collections;
 		public int Groups;
 		public int Sounds;
+		public int Shared;
 	}
 
-	// todo: clip sharing/single-loading
-	internal static async void StartPipeline() {
+	internal static async Task StartPipeline() {
+		loaforcsSoundAPI.Logger.LogInfo("Starting Sound-pack loading pipeline");
+
 		Stopwatch completeLoadingTimer = Stopwatch.StartNew();
 		Stopwatch timer = Stopwatch.StartNew();
 
@@ -73,6 +63,9 @@ static class SoundPackLoadPipeline {
 		loaforcsSoundAPI.Logger.LogInfo($"(Step 2) Loading Sound-pack mappings ('{mappings.Count}') took {timer.ElapsedMilliseconds}ms");
 		timer.Restart();
 
+		HashSet<SoundInstance> sharedSounds = []; // Sounds with already-loaded (duplicate) audio clips, to skip from loading and set later.
+		Dictionary<string, SoundInstance> uniqueSounds = [];
+
 		SkippedResults skippedStats = new SkippedResults();
 		MultithreadedAudioClipLoader audioClipLoader = new MultithreadedAudioClipLoader();
 
@@ -97,8 +90,10 @@ static class SoundPackLoadPipeline {
 						continue;
 					}
 
+					if(collection.UpdateEveryFrame) replacementGroup.UpdateEveryFrame = true;
+
 					SoundPackDataHandler.AddReplacement(replacementGroup);
-					replacementGroup.QueueSounds(audioClipLoader, skippedStats);
+					replacementGroup.QueueSounds(audioClipLoader, skippedStats, sharedSounds, uniqueSounds);
 				}
 			}
 		}
@@ -114,7 +109,7 @@ static class SoundPackLoadPipeline {
 		// Delay until splash screens are done and we can check in on the unity web requests
 		loaforcsSoundAPI.Logger.LogInfo("Waiting for splash screens to complete to continue...");
 		completeLoadingTimer.Stop();
-		await Task.Delay(1);
+		await Task.Yield();
 		loaforcsSoundAPI.Logger.LogInfo("Splash screens done! Continuing pipeline");
 		loaforcsSoundAPI.Logger.LogWarning("The game will freeze for a moment!");
 		timer.Restart();
@@ -124,13 +119,20 @@ static class SoundPackLoadPipeline {
 		// it would probably be nice to actually have a better way to order steps instead of hardcoding it in the log messages
 		audioClipLoader.LoadAllBlocking();
 
+		// Step 7: Restore shared clips.
+		foreach(SoundInstance soundReplacement in sharedSounds) {
+			if(uniqueSounds.TryGetValue(soundReplacement.FullPath, out SoundInstance sound)) {
+				soundReplacement.Clip = sound.Clip;
+			}
+		}
+		loaforcsSoundAPI.Logger.LogInfo($"(Step 7) Restored {skippedStats.Shared} already-loaded clips!");
+
 		#endregion
 
-		// Step 7: Fire event and final cleanup
+		// Step 8: Fire event and final cleanup
 		OnFinishedPipeline();
 		mappings = null;
 
-		loaforcsSoundAPI.Logger.LogDebug($"Active Threads that are left over: {_activeThreads}");
 		loaforcsSoundAPI.Logger.LogInfo($"Entire load process took an effective {completeLoadingTimer.ElapsedMilliseconds}ms");
 	}
 
@@ -177,7 +179,7 @@ static class SoundPackLoadPipeline {
 		}
 
 		Debuggers.SoundReplacementLoader?.Log($"loaded '{packs.Count}' packs.");
-		return packs.Values.ToList();
+		return [.. packs.Values];
 	}
 
 	static LoadSoundOperation StartWebRequestOperation(SoundPack pack, SoundInstance sound, AudioType type) {

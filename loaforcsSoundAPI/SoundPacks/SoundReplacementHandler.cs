@@ -5,19 +5,14 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using BepInEx.Configuration;
-using JetBrains.Annotations;
 using loaforcsSoundAPI.Core;
+using loaforcsSoundAPI.Core.Patches;
 using loaforcsSoundAPI.Reporting;
 using loaforcsSoundAPI.Reporting.Data;
-using loaforcsSoundAPI.SoundPacks.Conditions;
 using loaforcsSoundAPI.SoundPacks.Data;
 using loaforcsSoundAPI.SoundPacks.Data.Conditions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Debug = UnityEngine.Debug;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace loaforcsSoundAPI.SoundPacks;
@@ -26,7 +21,7 @@ readonly struct ReplacementResult {
 	public ReplacementResult(AudioClip replacement, SoundReplacementGroup group) {
 		ReplacedClip = replacement;
 		ReplacedWith = group;
-		IsUpdateEveryFrame = group.Parent.UpdateEveryFrame;
+		IsUpdateEveryFrame = group.UpdateEveryFrame;
 	}
 
 	public AudioClip ReplacedClip { get; }
@@ -54,7 +49,7 @@ static class SoundReplacementHandler {
 			return false;
 		}
 
-		if(@event.Data.ReplacedWith != null && @event.Data.ReplacedWith.Parent.UpdateEveryFrame) {
+		if(!@event.IsOneShot && @event.Data.ReplacedWith != null && @event.Data.ReplacedWith.UpdateEveryFrame) {
 			return false;
 		}
 
@@ -72,7 +67,7 @@ static class SoundReplacementHandler {
 
 		if(
 			!TryProcessName(ref name, @event.Source, @event.Clip) ||
-			!TryGetReplacementClip(name, out SoundReplacementGroup group, out AudioClip newClip, @event.Context ?? DefaultConditionContext.DEFAULT)
+			!TryGetReplacementClip(name, out SoundReplacementGroup group, out AudioClip newClip, @event.Context ?? new DefaultConditionContext(@event.Source))
 		) {
 			ArrayPool<string>.Shared.Return(name);
 			return false;
@@ -84,8 +79,10 @@ static class SoundReplacementHandler {
 		result = new ReplacementResult(newClip, group);
 
 		// todo: this should probably not be handled here as with UEFOneShotFix the resulting AudioSource will be different than the one passed in the event.
-		// it should be handled instead in the patches where 
-		@event.Data.ReplacedWith = group;
+		// it should be handled instead in the patches where
+		if(!PatchConfig.UEFOneShotWorkaround || !result.Value.IsUpdateEveryFrame || !@event.IsOneShot) {
+			@event.Data.ReplacedWith = group;
+		}
 
 		if(result.Value.IsUpdateEveryFrame) {
 			Debuggers.UpdateEveryFrame?.Log($"swapped to a clip that uses update_every_frame !!! isOneShot = {@event.IsOneShot}");
@@ -178,8 +175,8 @@ static class SoundReplacementHandler {
 
 			SoundReport.PlayedSound playedSound = new SoundReport.PlayedSound($"{name[TOKEN_PARENT_NAME]}:{name[TOKEN_OBJECT_NAME]}:{name[TOKEN_CLIP_NAME]}", className, source.playOnAwake);
 
-			if(!SoundReportHandler.CurrentReport.PlayedSounds.Any(playedSound.Equals))
-				// only add new unique ones
+			if(SoundReportHandler.CurrentReport.PlayedSounds.FindIndex(playedSound.Equals) == -1)
+			// only add new unique ones
 			{
 				SoundReportHandler.CurrentReport.PlayedSounds.Add(playedSound);
 			}
@@ -204,18 +201,14 @@ static class SoundReplacementHandler {
 
 		Debuggers.SoundReplacementHandler?.Log("sound dictionary hit");
 
-		possibleCollections = possibleCollections
-			.Where(it => it.Parent.Evaluate(context) && it.Evaluate(context) && CheckGroupMatches(it, name))
-			.ToList();
-
-		if(possibleCollections.Count == 0) {
+		group = possibleCollections.Find(it => it.Parent.Evaluate(context) && it.Evaluate(context) && CheckGroupMatches(it, name));
+		if(group == null) {
 			return false;
 		}
 
 		Debuggers.SoundReplacementHandler?.Log("sound group that matches");
 
-		group = possibleCollections[Random.Range(0, possibleCollections.Count)];
-		List<SoundInstance> replacements = group.Sounds.Where(it => it.Clip && it.Evaluate(context)).ToList();
+		List<SoundInstance> replacements = group.Sounds.FindAll(it => it.Clip && it.Evaluate(context));
 		if(replacements.Count == 0) {
 			return false;
 		}
@@ -241,6 +234,9 @@ static class SoundReplacementHandler {
 				break;
 			}
 		}
+
+		Debuggers.SoundReplacementHandler?.Log($"chosen sound: {sound}");
+		if(sound.Clip == null) return true;
 
 		clip = sound.Clip;
 		Debuggers.SoundReplacementHandler?.Log("done, dumping stack trace!");

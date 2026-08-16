@@ -1,9 +1,7 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using loaforcsSoundAPI.Core.Util.Extensions;
 using loaforcsSoundAPI.SoundPacks;
 using UnityEngine;
-using UnityEngine.Experimental.Audio;
 
 namespace loaforcsSoundAPI.Core.Patches;
 
@@ -13,25 +11,37 @@ static class AudioSourcePatch {
 
 	// todo: this should maybe be supported in NativeBackend?
 	[HarmonyPrefix]
-	[HarmonyPatch(nameof(AudioSource.PlayOneShot), [ typeof(AudioClip), typeof(float) ])]
-	static bool PlayOneShot(AudioSource __instance, ref AudioClip clip) {
+	[HarmonyPatch(nameof(AudioSource.PlayOneShot), [typeof(AudioClip), typeof(float)])]
+	static bool PlayOneShot(AudioSource __instance, ref AudioClip clip, float volumeScale) {
 		if(!clip) {
 			return true; // returning true here gives the default unity warning
 		}
 
-		AudioSourcePlayEvent @event = new AudioSourcePlayEvent(__instance, clip, true);
+		AudioSourcePlayEvent @event = new AudioSourcePlayEvent(__instance, clip, isOneShot: true);
 
 		if(SoundReplacementHandler.TryReplaceAudio(in @event, out ReplacementResult? result)) {
 			if(result.Value.IsUpdateEveryFrame) {
 				if(PatchConfig.UEFOneShotWorkaround) {
 					GameObject cloneTarget = new GameObject($"UEFOneShotFix - {clip.name}");
 					cloneTarget.transform.SetParent(__instance.transform, false);
-					AudioSource clone = SoundAPI.CopyAudioSource(__instance, cloneTarget, AudioSourceCopyFlags.DontCopyPlayOnAwake);
+					AudioSource clone = SoundAPI.CopyAudioSource(__instance, cloneTarget, AudioSourceCopyFlags.DontCopyPlayOnAwake | AudioSourceCopyFlags.DontCopySpatialize | AudioSourceCopyFlags.DontCopyLoop);
 					AudioSourceAdditionalData data = AudioSourceAdditionalData.GetOrCreate(clone);
+					SoundAPIAudioManager.liveAudioSourceData.Add(data); // Set UEF OneShot as a live AudioSource, for proper cleanup after it gets destroyed.
 					clone.clip = result.Value.ReplacedClip;
+					clone.volume *= volumeScale;
 					data.ReplacedWith = result.Value.ReplacedWith; // setting replaced with here is important, see SoundReplacementHandler.ShouldBeReplaced (would have to handle DisableReplacing manually instead)
-					@event.Data.ReplacedWith = null; // undo SoundReplacementHandler.TryReplaceAudio setting this, this is icky
-					clone.PlayThenDestroy();
+					data.VolumeScale = volumeScale;
+					if(data.ReplacedWith?.Volume.HasValue == true) {
+						clone.volume = data.ReplacedWith.Volume.Value * volumeScale;
+						if(Debuggers.AudioSourceAdditionalData != null) {
+							string volume = $"{clone.volume}";
+							if(clone.volume != result.Value.ReplacedWith.Volume.Value) {
+								volume += $" ({result.Value.ReplacedWith.Volume.Value} * {volumeScale})";
+							}
+							Debuggers.AudioSourceAdditionalData?.Log($"Changed {clone} (gameobject: {clone.name}) volume to: {volume})");
+						}
+					}
+					clone.PlayThenDestroy(); // TODO: Object pooling instead of destroying.
 
 					return false;
 				}
@@ -40,6 +50,16 @@ static class AudioSourcePatch {
 			}
 
 			clip = result.Value.ReplacedClip;
+			if(result.Value.ReplacedWith?.Volume.HasValue == true) {
+				__instance.volume = result.Value.ReplacedWith.Volume.Value * volumeScale;
+				if(Debuggers.AudioSourceAdditionalData != null) {
+					string volume = $"{__instance.volume}";
+					if(__instance.volume != result.Value.ReplacedWith.Volume.Value) {
+						volume += $" ({result.Value.ReplacedWith.Volume.Value} * {volumeScale})";
+					}
+					Debuggers.AudioSourceAdditionalData?.Log($"Changed {__instance} (gameobject: {__instance.name}) volume to: {volume})");
+				}
+			}
 		}
 
 		return true;
@@ -49,7 +69,7 @@ static class AudioSourcePatch {
 	[HarmonyPriority(Priority.Last)]
 	[HarmonyPrefix]
 	static void UpdateOriginalClip(AudioSource __instance, AudioClip value, bool __runOriginal) {
-		if(!__runOriginal) {
+		if(!__runOriginal || bypassSpoofing) {
 			return;
 		}
 
@@ -88,6 +108,6 @@ static class AudioSourcePatch {
 
 		AudioSourceAdditionalData data = AudioSourceAdditionalData.GetOrCreate(__instance);
 		__result = data.OriginalClip;
-		Debuggers.AudioClipSpoofing?.Log($"({__instance.gameObject.name}) spoofing result to {data.OriginalClip}");
+		Debuggers.AudioClipSpoofing?.Log($"({__instance.gameObject.name}) spoofing result to {((data.OriginalClip != null) ? data.OriginalClip.name : "null")}");
 	}
 }
