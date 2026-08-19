@@ -70,3 +70,6 @@
 ## 2.0.12
 - Fixes an issue where `.PlayScheduled` or `.Play(delay)` didn't work correctly
   - Fixes [the issue with TME emote looping audio](https://github.com/loaforcsSoundAPI/loaforcsSoundAPI/issues/37)
+
+## 2.0.13
+- Adds native backend support for `6000.3.15f1` (PEAK) fixing [background music in ???? is not detected](https://github.com/loaforcsSoundAPI/loaforcsSoundAPI/issues/41)

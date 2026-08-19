@@ -29,7 +29,10 @@ static class NativeBackend {
 		)), // Lethal Company post-v73
 		new NativeBackendSettings("2022.3.60f1", new NativeOffsets(
 			0x0bcbee0
-		)) // Test project
+		)), // Test project
+		new NativeBackendSettings("6000.3.15f1", new NativeOffsets(
+			0x0c10750
+		)) // PEAK
 	];
 
 	[UsedImplicitly]
